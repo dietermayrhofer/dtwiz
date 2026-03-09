@@ -3,13 +3,14 @@ package analyzer
 import "strings"
 
 // detectOtelCollector looks for a running OpenTelemetry Collector process.
-func detectOtelCollector() (bool, string) {
+// Returns (running, binaryPath, configPath).
+func detectOtelCollector() (bool, string, string) {
 	// First try exact process name matches for standard distributions.
 	for _, bin := range []string{"otelcol", "otelcol-contrib"} {
 		ok, pidStr := runCmd("pgrep", "-x", bin)
 		if ok {
-			configPath := otelConfigFromPID(strings.TrimSpace(pidStr))
-			return true, configPath
+			binPath, configPath := otelInfoFromPID(strings.TrimSpace(pidStr))
+			return true, binPath, configPath
 		}
 	}
 	// Fall back to full command-line search to catch custom builds
@@ -19,23 +20,27 @@ func detectOtelCollector() (bool, string) {
 		if ok {
 			// pgrep may return multiple PIDs; use the first one.
 			pid := strings.TrimSpace(strings.SplitN(pidStr, "\n", 2)[0])
-			configPath := otelConfigFromPID(pid)
-			return true, configPath
+			binPath, configPath := otelInfoFromPID(pid)
+			return true, binPath, configPath
 		}
 	}
-	return false, ""
+	return false, "", ""
 }
 
-// otelConfigFromPID returns the --config= path from a process's command line.
-func otelConfigFromPID(pid string) string {
+// otelInfoFromPID returns the binary path and --config= path from a process's command line.
+func otelInfoFromPID(pid string) (binaryPath, configPath string) {
 	if pid == "" {
-		return ""
+		return "", ""
 	}
 	ok, cmdline := runCmd("ps", "-p", pid, "-o", "args=")
 	if !ok {
-		return ""
+		return "", ""
 	}
-	return extractOtelConfigPath(cmdline)
+	if fields := strings.Fields(cmdline); len(fields) > 0 {
+		binaryPath = fields[0]
+	}
+	configPath = extractOtelConfigPath(cmdline)
+	return binaryPath, configPath
 }
 
 // extractOtelConfigPath parses an otelcol cmdline to find --config=<path>.

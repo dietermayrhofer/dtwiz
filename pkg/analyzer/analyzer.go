@@ -120,6 +120,7 @@ type SystemInfo struct {
 	Kubernetes       *KubernetesInfo  `json:"kubernetes,omitempty"`
 	OneAgentRunning  bool             `json:"oneagent_running"`
 	OtelCollector    bool             `json:"otel_collector"`
+	OtelBinaryPath   string           `json:"otel_binary_path,omitempty"`
 	OtelConfigPath   string           `json:"otel_config_path,omitempty"`
 	AWS              *AWSInfo         `json:"aws,omitempty"`
 	Azure            *AzureInfo       `json:"azure,omitempty"`
@@ -162,8 +163,14 @@ func (s *SystemInfo) Summary() string {
 
 	if s.OtelCollector {
 		var line string
-		if s.OtelConfigPath != "" {
-			line = colorValue.Sprint(s.OtelConfigPath) + colorValue.Sprint("  (running)")
+		if s.OtelBinaryPath != "" {
+			line = colorValue.Sprint(s.OtelBinaryPath)
+			if s.OtelConfigPath != "" {
+				line += colorMuted.Sprint("  config=") + colorValue.Sprint(s.OtelConfigPath)
+			}
+			line += colorMuted.Sprint("  (running)")
+		} else if s.OtelConfigPath != "" {
+			line = colorValue.Sprint(s.OtelConfigPath) + colorMuted.Sprint("  (running)")
 		} else {
 			line = colorValue.Sprint("running")
 		}
@@ -336,9 +343,10 @@ func AnalyzeSystem() (*SystemInfo, error) {
 	})
 
 	run(func() error {
-		running, configPath := detectOtelCollector()
+		running, binaryPath, configPath := detectOtelCollector()
 		mu.Lock()
 		info.OtelCollector = running
+		info.OtelBinaryPath = binaryPath
 		info.OtelConfigPath = configPath
 		mu.Unlock()
 		return nil
