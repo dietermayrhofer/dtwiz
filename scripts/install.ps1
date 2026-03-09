@@ -1,14 +1,11 @@
-# install.ps1 — Download and run dtingest on Windows.
+# install.ps1 — Download and install dtingest on Windows.
 #
 # Usage:
-#   .\install.ps1 -Environment <env-url> `
-#                 -AccessToken <token> `
-#                 -PlatformToken <token> `
-#                 [ExtraArgs <dtingest args...>]
+#   .\install.ps1 [-InstallDir <dir>]
 #
-# All three credential parameters are optional; omit any that are not required
-# for your chosen installation method.  Any extra arguments are forwarded
-# verbatim to dtingest (default: "setup").
+# By default the binary is installed to $env:LOCALAPPDATA\Programs\dtingest.
+# Pass -InstallDir to override.  The install directory is added permanently
+# to the current user's PATH.
 #
 # The script requires either:
 #   • the GitHub CLI (gh) — recommended for private repos, or
@@ -19,18 +16,7 @@
 
 [CmdletBinding()]
 param(
-    [Alias("e")]
-    [string]$Environment    = "",
-
-    [Alias("a")]
-    [string]$AccessToken    = "",
-
-    [Alias("p")]
-    [string]$PlatformToken  = "",
-
-    # Additional arguments forwarded to dtingest
-    [Parameter(ValueFromRemainingArguments)]
-    [string[]]$ExtraArgs    = @()
+    [string]$InstallDir = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -99,22 +85,38 @@ try {
 
     Expand-Archive -Path $ArchivePath -DestinationPath $TmpDir -Force
 
-    $Binary = Join-Path $TmpDir "dtingest.exe"
-    if (-not (Test-Path $Binary)) {
+    $ExtractedBinary = Join-Path $TmpDir "dtingest.exe"
+    if (-not (Test-Path $ExtractedBinary)) {
         Write-Error "dtingest.exe not found after extraction."
         exit 1
     }
 
-    # ── Set credentials as environment variables ───────────────────────────────
-    if ($Environment)   { $env:DT_ENVIRONMENT    = $Environment }
-    if ($AccessToken)   { $env:DT_ACCESS_TOKEN   = $AccessToken }
-    if ($PlatformToken) { $env:DT_PLATFORM_TOKEN = $PlatformToken }
+    # ── Determine install directory ────────────────────────────────────────────
+    if (-not $InstallDir) {
+        $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\dtingest"
+    }
+    if (-not (Test-Path $InstallDir)) {
+        New-Item -ItemType Directory -Path $InstallDir | Out-Null
+    }
 
-    # ── Run dtingest ───────────────────────────────────────────────────────────
-    if ($ExtraArgs.Count -gt 0) {
-        & $Binary @ExtraArgs
-    } else {
-        & $Binary setup
+    # ── Install binary ─────────────────────────────────────────────────────────
+    $Dest = Join-Path $InstallDir "dtingest.exe"
+    Move-Item -Force $ExtractedBinary $Dest
+
+    Write-Host ""
+    Write-Host "dtingest $Version installed to $Dest"
+
+    # ── Add to user PATH if needed ─────────────────────────────────────────────
+    $UserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+    $PathDirs = $UserPath -split ";"
+    if ($PathDirs -notcontains $InstallDir) {
+        $NewPath = ($PathDirs + $InstallDir) -join ";"
+        [Environment]::SetEnvironmentVariable("PATH", $NewPath, "User")
+        # Also update the current session
+        $env:PATH = "$env:PATH;$InstallDir"
+        Write-Host ""
+        Write-Host "  Added $InstallDir to your user PATH."
+        Write-Host "  Open a new terminal for the change to take effect."
     }
 } finally {
     Remove-Item -Recurse -Force $TmpDir -ErrorAction SilentlyContinue

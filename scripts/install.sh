@@ -121,12 +121,41 @@ fi
 echo ""
 echo "dtingest ${VERSION} installed to ${DEST}"
 
-# Warn if install dir is not in PATH
+# ── Add to PATH in shell profile if needed ─────────────────────────────────────
 case ":${PATH}:" in
-    *":${INSTALL_DIR}:"*) ;;
+    *":${INSTALL_DIR}:"*)
+        # Already in the current session's PATH — nothing to do.
+        ;;
     *)
-        echo ""
-        echo "  NOTE: ${INSTALL_DIR} is not in your PATH."
-        echo "  Add it with: export PATH=\"${INSTALL_DIR}:\$PATH\""
+        # Detect shell profile file
+        PROFILE_FILE=""
+        case "${SHELL}" in
+            */zsh)
+                PROFILE_FILE="${HOME}/.zshrc" ;;
+            */bash)
+                if [ "$(uname -s)" = "Darwin" ]; then
+                    PROFILE_FILE="${HOME}/.bash_profile"
+                else
+                    PROFILE_FILE="${HOME}/.bashrc"
+                fi ;;
+            *)
+                PROFILE_FILE="${HOME}/.profile" ;;
+        esac
+
+        EXPORT_LINE="export PATH=\"${INSTALL_DIR}:\$PATH\""
+
+        if [ -n "$PROFILE_FILE" ]; then
+            # Only append if the line isn't already present
+            if ! grep -qF "${INSTALL_DIR}" "${PROFILE_FILE}" 2>/dev/null; then
+                printf '\n# Added by dtingest installer\n%s\n' "$EXPORT_LINE" >> "$PROFILE_FILE"
+                echo ""
+                echo "  Added ${INSTALL_DIR} to PATH in ${PROFILE_FILE}"
+                echo "  Run: source ${PROFILE_FILE}  (or open a new terminal)"
+            fi
+        else
+            echo ""
+            echo "  NOTE: ${INSTALL_DIR} is not in your PATH."
+            echo "  Add it with: ${EXPORT_LINE}"
+        fi
         ;;
 esac
