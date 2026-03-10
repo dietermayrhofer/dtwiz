@@ -4,7 +4,6 @@
 package dtctl
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,16 +14,19 @@ import (
 	"strings"
 )
 
-const githubReleasesAPI = "https://api.github.com/repos/dynatrace-oss/dtctl/releases/latest"
+const (
+	dtctlRepo           = "dynatrace-oss/dtctl"
+	githubLatestRelease = "https://github.com/" + dtctlRepo + "/releases/latest"
+)
 
 type ghRelease struct {
-	TagName string    `json:"tag_name"`
-	Assets  []ghAsset `json:"assets"`
+	TagName string
+	Assets  []ghAsset
 }
 
 type ghAsset struct {
-	Name               string `json:"name"`
-	BrowserDownloadURL string `json:"browser_download_url"`
+	Name               string
+	BrowserDownloadURL string
 }
 
 // EnsureInstalled checks if dtctl is present in PATH. If not, it prompts the
@@ -92,30 +94,65 @@ func EnsureInstalled() error {
 	return nil
 }
 
-// fetchLatestRelease calls the GitHub API and returns the latest dtctl release.
+// fetchLatestRelease resolves the latest dtctl release by following the GitHub
+// /releases/latest redirect (no API call, avoids rate limits). It then builds
+// asset download URLs from the known naming convention.
 func fetchLatestRelease() (*ghRelease, error) {
-	req, err := http.NewRequest("GET", githubReleasesAPI, nil)
+	// Use a client that does NOT follow redirects so we can read the Location header.
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	req, err := http.NewRequest("GET", githubLatestRelease, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "dtingest")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GitHub API returned %s", resp.Status)
+	loc := resp.Header.Get("Location")
+	if loc == "" {
+		return nil, fmt.Errorf("no redirect from %s (HTTP %d)", githubLatestRelease, resp.StatusCode)
 	}
 
-	var rel ghRelease
-	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
-		return nil, err
+	// Location looks like https://github.com/dynatrace-oss/dtctl/releases/tag/v0.x.y
+	parts := strings.Split(loc, "/")
+	tag := parts[len(parts)-1]
+	if tag == "" {
+		return nil, fmt.Errorf("could not extract tag from redirect URL: %s", loc)
 	}
-	return &rel, nil
+	version := strings.TrimPrefix(tag, "v")
+
+	// Build known asset names for all platforms.
+	// dtctl naming: dtctl_{version}_{os}_{arch}.tar.gz / .zip
+	type platform struct {
+		os, arch string
+	}
+	platforms := []platform{
+		{"darwin", "arm64"}, {"darwin", "amd64"},
+		{"linux", "arm64"}, {"linux", "amd64"},
+		{"windows", "arm64"}, {"windows", "amd64"},
+	}
+
+	var assets []ghAsset
+	for _, p := range platforms {
+		ext := "tar.gz"
+		if p.os == "windows" {
+			ext = "zip"
+		}
+		name := fmt.Sprintf("dtctl_%s_%s_%s.%s", version, p.os, p.arch, ext)
+		url := fmt.Sprintf("https://github.com/%s/releases/download/%s/%s", dtctlRepo, tag, name)
+		assets = append(assets, ghAsset{Name: name, BrowserDownloadURL: url})
+	}
+
+	return &ghRelease{TagName: tag, Assets: assets}, nil
 }
 
 // findAsset locates the release asset matching the current OS and architecture.
