@@ -197,15 +197,15 @@ func InstallOneAgent(envURL, token string, dryRun, quiet bool, hostGroup string)
 func buildOneAgentInstallerArgs(installerPath, apiURL string, quiet bool, hostGroup string) []string {
 	if runtime.GOOS == "windows" {
 		// Windows exe installer: parameters are passed directly as flags.
-		args := []string{
-			installerPath,
-			"--set-app-log-content-access=true",
-		}
-		if hostGroup != "" {
-			args = append(args, fmt.Sprintf("--set-host-group=%s", hostGroup))
-		}
+		// --quiet MUST be the first argument so the self-extracting exe
+		// suppresses the GUI before processing any other flags.
+		args := []string{installerPath}
 		if quiet {
 			args = append(args, "--quiet")
+		}
+		args = append(args, "--set-app-log-content-access=true")
+		if hostGroup != "" {
+			args = append(args, fmt.Sprintf("--set-host-group=%s", hostGroup))
 		}
 		return args
 	}
