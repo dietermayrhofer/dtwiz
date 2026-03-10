@@ -113,3 +113,67 @@ func TestFormatRecommendations_NonEmpty(t *testing.T) {
 		t.Error("FormatRecommendations should not return empty string for non-empty recs")
 	}
 }
+
+func TestGenerateRecommendations_OtelCollectorNotRunning(t *testing.T) {
+	system := &analyzer.SystemInfo{
+		Platform:         analyzer.PlatformLinux,
+		ContainerRuntime: analyzer.ContainerRuntimeNone,
+		Orchestrator:     analyzer.OrchestratorNone,
+		OtelCollector:    false,
+	}
+	recs := recommender.GenerateRecommendations(system)
+	found := false
+	for _, r := range recs {
+		if r.Method == recommender.MethodOtelCollector {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected otel-collector recommendation even when no collector is running")
+	}
+}
+
+func TestGenerateRecommendations_OtelCollectorRunning(t *testing.T) {
+	system := &analyzer.SystemInfo{
+		Platform:         analyzer.PlatformLinux,
+		ContainerRuntime: analyzer.ContainerRuntimeNone,
+		Orchestrator:     analyzer.OrchestratorNone,
+		OtelCollector:    true,
+		OtelConfigPath:   "/etc/otel/config.yaml",
+	}
+	recs := recommender.GenerateRecommendations(system)
+	foundUpdate := false
+	foundInstall := false
+	for _, r := range recs {
+		if r.Method == recommender.MethodOtelUpdate {
+			foundUpdate = true
+		}
+		if r.Method == recommender.MethodOtelCollector {
+			foundInstall = true
+		}
+	}
+	if !foundUpdate {
+		t.Error("expected otel-update recommendation when collector is already running")
+	}
+	if foundInstall {
+		t.Error("should not recommend otel-collector install when collector is already running")
+	}
+}
+
+func TestGenerateRecommendations_macOSGetsOtel(t *testing.T) {
+	system := &analyzer.SystemInfo{
+		Platform:         analyzer.PlatformDarwin,
+		ContainerRuntime: analyzer.ContainerRuntimeNone,
+		Orchestrator:     analyzer.OrchestratorNone,
+	}
+	recs := recommender.GenerateRecommendations(system)
+	found := false
+	for _, r := range recs {
+		if r.Method == recommender.MethodOtelCollector {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected otel-collector recommendation on macOS")
+	}
+}

@@ -18,6 +18,7 @@ const (
 	MethodKubernetes       IngestMethod = "kubernetes"
 	MethodDocker           IngestMethod = "docker"
 	MethodOtelCollector    IngestMethod = "otel-collector"
+	MethodOtelUpdate       IngestMethod = "otel-update"
 	MethodAWS              IngestMethod = "aws"
 	MethodAlreadyInstalled IngestMethod = "already-installed"
 	MethodNotSupported     IngestMethod = "not-supported"
@@ -114,14 +115,14 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 		})
 	}
 
-	// 6. OTel Collector found → configure exporter.
+	// 6. OTel Collector found → configure existing exporter.
 	if system.OtelCollector {
 		configHint := ""
 		if system.OtelConfigPath != "" {
 			configHint = fmt.Sprintf(" (config: %s)", system.OtelConfigPath)
 		}
 		recs = append(recs, Recommendation{
-			Method:   MethodOtelCollector,
+			Method:   MethodOtelUpdate,
 			Priority: 50,
 			Title:    "Configure existing OpenTelemetry Collector",
 			Description: fmt.Sprintf(
@@ -129,6 +130,20 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 				configHint,
 			),
 			Prerequisites: []string{"Access to OTel Collector configuration"},
+			Steps: []string{
+				"dtingest install otel-update",
+			},
+		})
+	}
+
+	// 7. No OTel Collector running → recommend installing one.
+	if !system.OtelCollector {
+		recs = append(recs, Recommendation{
+			Method:   MethodOtelCollector,
+			Priority: 50,
+			Title:    "Install Dynatrace OpenTelemetry Collector",
+			Description: "Deploy the Dynatrace OpenTelemetry Collector to ingest traces, metrics, and logs via OTLP.",
+			Prerequisites: []string{"Dynatrace API token with ingest scopes"},
 			Steps: []string{
 				"dtingest install otel-collector",
 			},
