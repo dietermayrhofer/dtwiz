@@ -90,9 +90,9 @@ func downloadOneAgentInstaller(apiURL, token string) (string, error) {
 		return "", err
 	}
 
-	// API: GET /api/v1/deployment/installer/agent/{type}/latest/default?arch={arch}
+	// API: GET /api/v1/deployment/installer/agent/{osType}/default/latest?arch={arch}
 	downloadURL := fmt.Sprintf(
-		"%s/api/v1/deployment/installer/agent/%s/latest/default?arch=%s",
+		"%s/api/v1/deployment/installer/agent/%s/default/latest?arch=%s",
 		apiURL, iType, arch,
 	)
 
