@@ -136,7 +136,8 @@ case ":${PATH}:" in
                 printf '\n# Added by dtingest installer\n%s\n' "$EXPORT_LINE" >> "$PROFILE_FILE"
                 echo ""
                 echo "  Added ${INSTALL_DIR} to PATH in ${PROFILE_FILE}"
-                echo "  Run: source ${PROFILE_FILE}  (or open a new terminal)"
+                . "${PROFILE_FILE}"
+                echo "  Sourced ${PROFILE_FILE}. dtingest is now available."
             fi
         else
             echo ""

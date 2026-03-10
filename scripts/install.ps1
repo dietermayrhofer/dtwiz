@@ -21,10 +21,21 @@ $ErrorActionPreference = "Stop"
 $Repo = "dietermayrhofer/dtingest"
 
 # ── Detect architecture ────────────────────────────────────────────────────────
-$RawArch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+# Try .NET RuntimeInformation first (PowerShell 7+ / .NET 4.7.1+), then fall
+# back to the PROCESSOR_ARCHITECTURE environment variable (always set on Windows).
+$RawArch = $null
+try {
+    $RawArch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+} catch {
+    # Property not available — fall back below.
+}
+if (-not $RawArch) {
+    $RawArch = $env:PROCESSOR_ARCHITECTURE   # AMD64 | ARM64 | x86
+}
+
 switch ($RawArch) {
-    "X64"   { $Arch = "amd64" }
-    "Arm64" { $Arch = "arm64" }
+    { $_ -in "X64", "AMD64" }  { $Arch = "amd64" }
+    { $_ -in "Arm64", "ARM64" } { $Arch = "arm64" }
     default {
         Write-Error "Unsupported architecture: $RawArch"
         exit 1
