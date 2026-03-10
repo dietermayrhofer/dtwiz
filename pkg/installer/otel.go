@@ -383,7 +383,7 @@ func waitForLogInDynatrace(searchTerm string, timeout time.Duration) error {
 	var lastErr string
 	consecutiveErrors := 0
 	for {
-		cmd := exec.Command("dtctl", buildArgs()...)
+		cmd := exec.Command(dtctl.Binary(), buildArgs()...)
 		out, err := cmd.Output()
 		if err == nil && strings.Contains(string(out), searchTerm) {
 			return nil

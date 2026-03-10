@@ -115,7 +115,7 @@ func getDtEnvironment() (environmentURL, token string, err error) {
 				"  export DT_ENVIRONMENT=https://<your-env>.apps.dynatracelabs.com/",
 		)
 	}
-	loginCmd := exec.Command("dtctl", loginArgs...)
+	loginCmd := exec.Command(dtctl.Binary(), loginArgs...)
 	loginCmd.Stdin = os.Stdin
 	var loginOut bytes.Buffer
 	loginCmd.Stdout = &loginOut

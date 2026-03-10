@@ -21,7 +21,7 @@ type AppsContextInfo struct {
 // return 403. Returns nil if no apps-URL context is found or if the active
 // context is already an apps URL.
 func AppsContext() *AppsContextInfo {
-	out, err := exec.Command("dtctl", "config", "get-contexts", "-o", "json", "--plain").Output()
+	out, err := exec.Command(Binary(), "config", "get-contexts", "-o", "json", "--plain").Output()
 	if err != nil {
 		return nil // non-fatal: fall back to default context
 	}
@@ -76,7 +76,7 @@ func IsAuthError(err error) bool {
 // opening the browser so the user can complete the OAuth flow.
 func Reauth(ctx *AppsContextInfo) error {
 	fmt.Printf("\n\n  Session expired for dtctl context %q. Re-authenticating...\n", ctx.Name)
-	cmd := exec.Command("dtctl", "auth", "login", "--context", ctx.Name, "--environment", ctx.Environment)
+	cmd := exec.Command(Binary(), "auth", "login", "--context", ctx.Name, "--environment", ctx.Environment)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

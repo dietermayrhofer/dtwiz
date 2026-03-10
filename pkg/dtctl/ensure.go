@@ -19,6 +19,21 @@ const (
 	githubLatestRelease = "https://github.com/" + dtctlRepo + "/releases/latest"
 )
 
+// dtctlPath holds the absolute path to the dtctl binary when it was
+// auto-installed by EnsureInstalled. Empty means dtctl was already in PATH.
+var dtctlPath string
+
+// Binary returns the path to use when invoking dtctl via exec.Command.
+// If dtctl was auto-downloaded, this returns the absolute path (which avoids
+// Go 1.19+'s refusal to run executables found relative to the current directory).
+// Otherwise it returns "dtctl" so that normal PATH lookup is used.
+func Binary() string {
+	if dtctlPath != "" {
+		return dtctlPath
+	}
+	return "dtctl"
+}
+
 type ghRelease struct {
 	TagName string
 	Assets  []ghAsset
@@ -83,6 +98,9 @@ func EnsureInstalled() error {
 	}
 
 	fmt.Printf("  Installed dtctl to %s\n", destPath)
+
+	// Store the absolute path so Binary() returns it for all subsequent exec calls.
+	dtctlPath = destPath
 
 	// If the install directory is not in PATH, add it to the shell profile automatically.
 	if _, err := exec.LookPath("dtctl"); err != nil {
