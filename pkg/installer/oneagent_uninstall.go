@@ -11,10 +11,6 @@ import (
 const (
 	// Linux: standard uninstall script path.
 	linuxUninstallScript = "/opt/dynatrace/oneagent/agent/uninstall.sh"
-
-	// Windows: standard uninstall command path.
-	// Uses %ProgramData% which is typically C:\ProgramData.
-	windowsUninstallCmd = `C:\ProgramData\dynatrace\oneagent\agent\uninstall.cmd`
 )
 
 // UninstallOneAgent removes Dynatrace OneAgent from the current host.
@@ -81,29 +77,17 @@ func uninstallOneAgentLinux(dryRun bool) error {
 }
 
 func uninstallOneAgentWindows(dryRun bool) error {
-	// Resolve the actual path using %ProgramData%.
-	programData := os.Getenv("ProgramData")
-	uninstallPath := windowsUninstallCmd
-	if programData != "" {
-		uninstallPath = programData + `\dynatrace\oneagent\agent\uninstall.cmd`
-	}
-
-	// Verify the uninstall command exists.
-	if _, err := os.Stat(uninstallPath); os.IsNotExist(err) {
-		return fmt.Errorf("OneAgent uninstall script not found at %s — is OneAgent installed?", uninstallPath)
-	}
-
 	header := color.New(color.FgCyan, color.Bold)
 	muted := color.New(color.FgHiBlack)
 
 	header.Println("  OneAgent Uninstall (Windows)")
 	muted.Println("  " + "────────────────────────────────────────")
 	fmt.Println()
-	fmt.Printf("  Uninstall command:  %s\n", uninstallPath)
+	fmt.Println("  Method: WMI product lookup + msiexec /x (quiet)")
 	fmt.Println()
 
 	if dryRun {
-		fmt.Println("[dry-run] Would run the OneAgent uninstall command. No changes made.")
+		fmt.Println("[dry-run] Would look up Dynatrace OneAgent via WMI and run msiexec /x to uninstall. No changes made.")
 		return nil
 	}
 
@@ -117,11 +101,15 @@ func uninstallOneAgentWindows(dryRun bool) error {
 	}
 	fmt.Println()
 
-	fmt.Println("  Running OneAgent uninstall command...")
-	if err := RunCommand("cmd.exe", "/C", uninstallPath); err != nil {
+	// Use PowerShell to look up the OneAgent product GUID via WMI and uninstall via msiexec.
+	psScript := `$app = Get-WmiObject win32_product -filter "Name like 'Dynatrace OneAgent'"; if ($app -eq $null) { Write-Error 'Dynatrace OneAgent not found'; exit 1 }; msiexec /x $app.IdentifyingNumber /quiet /l*vx uninstall.log; exit $LASTEXITCODE`
+
+	fmt.Println("  Looking up Dynatrace OneAgent via WMI...")
+	if err := RunCommand("powershell", "-NoProfile", "-Command", psScript); err != nil {
 		return fmt.Errorf("OneAgent uninstall failed: %w", err)
 	}
 
 	color.New(color.FgGreen, color.Bold).Println("\n  OneAgent uninstalled successfully.")
+	fmt.Println("  Uninstall log written to uninstall.log in the current directory.")
 	return nil
 }

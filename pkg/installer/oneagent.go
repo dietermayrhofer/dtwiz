@@ -192,9 +192,15 @@ func InstallOneAgent(envURL, token string, dryRun, quiet bool) error {
 // flags are appended so the installer produces no interactive output.
 func buildOneAgentInstallerArgs(installerPath, apiURL string, quiet bool) []string {
 	if runtime.GOOS == "windows" {
+		// Windows uses msiexec to run the MSI installer.
+		// Dynatrace parameters are passed via ADDITIONAL_CONFIGURATION.
+		additionalConfig := fmt.Sprintf(
+			"--set-server=%s --set-app-log-content-access=true",
+			strings.TrimRight(apiURL, "/"),
+		)
 		args := []string{
-			installerPath,
-			"--set-app-log-content-access=true",
+			"msiexec", "/i", installerPath,
+			fmt.Sprintf("ADDITIONAL_CONFIGURATION=%s", additionalConfig),
 		}
 		if quiet {
 			args = append(args, "/quiet", "/qn")
