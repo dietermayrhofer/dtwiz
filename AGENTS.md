@@ -145,6 +145,284 @@ The install script (`scripts/install.sh`) constructs this name at runtime and do
 
 **Fix:** run `goreleaser release --clean` against the existing tag. GoReleaser detects the already-created release and uploads the missing archives.
 
+## Dynatrace ingestion methods — full landscape
+
+The Dynatrace documentation at `docs.dynatrace.com/docs/ingest-from` organizes all ingestion methods into distinct categories. `dtingest` should understand this full landscape and enable as many as applicable **by default** — the zero-config philosophy means turning on all relevant defaults automatically, not asking the user to pick.
+
+### Ingestion method categories
+
+#### 1. OneAgent (full-stack, host-level)
+
+OneAgent is Dynatrace's primary data collection agent. A single OneAgent per host collects **all** monitoring data — infrastructure metrics, process monitoring, distributed traces, log ingestion, code-level profiling, and real user monitoring (RUM) injection. OneAgent auto-discovers processes and activates technology-specific instrumentation automatically (Java, .NET, Node.js, Go, PHP, Python, etc.).
+
+| Deployment target | How dtingest handles it |
+|---|---|
+| **Bare-metal Linux/Windows** | `dtingest install oneagent` — downloads and runs the installer |
+| **Docker hosts** | `dtingest install docker` — runs `dynatrace/oneagent` as a privileged container |
+| **Kubernetes** | `dtingest install kubernetes` — deploys the Dynatrace Operator + DynaKube CR |
+| **macOS** | Not supported — noted in analysis output |
+
+**Zero-config defaults for OneAgent:**
+- `--set-app-log-content-access=true` — enables log content access immediately
+- Full-stack monitoring mode (not infrastructure-only) — captures traces, metrics, logs, RUM
+- Auto-instrumentation of all detected technologies — no per-technology opt-in required
+
+#### 2. Dynatrace Operator (Kubernetes)
+
+The Dynatrace Operator is the recommended way to deploy Dynatrace on Kubernetes. It manages OneAgent pods, ActiveGate instances, and metadata enrichment via the DynaKube custom resource. Supports all major distributions: GKE, EKS, AKS, OpenShift, k3s, minikube, kind.
+
+**What the Operator enables by default (via DynaKube `cloudNativeFullStack`):**
+- OneAgent injection into all pods (via init containers / CSI driver)
+- ActiveGate for routing and Kubernetes API monitoring
+- Kubernetes cluster metrics, events, and workload monitoring
+- Automatic log collection from all pod stdout/stderr
+- Extension Execution Controller (EEC) for Dynatrace Extensions Framework 2.0
+
+**Zero-config principle:** `dtingest install kubernetes` deploys with `cloudNativeFullStack` mode — the most comprehensive option — rather than asking users to choose between infrastructure-only, application-only, or full-stack modes.
+
+#### 3. ActiveGate
+
+ActiveGate acts as a secure proxy between OneAgents and the Dynatrace cluster, and also performs monitoring of cloud environments and remote technologies. In Kubernetes, ActiveGate is deployed automatically by the Operator. For standalone use:
+
+- **Routing purpose:** proxy OneAgent traffic through a local gateway (useful for restricted networks)
+- **Monitoring purpose:** cloud platform monitoring (AWS, Azure, GCP), VMware, SNMP, WMI, Prometheus scraping
+- **Synthetic purpose:** run synthetic monitors from private locations
+
+**dtingest does not directly install standalone ActiveGate** — it is deployed automatically as part of the Kubernetes Operator installation. Standalone ActiveGate installation may be added as a future installer.
+
+#### 4. OpenTelemetry (OTLP native ingest)
+
+Dynatrace natively ingests OpenTelemetry data via OTLP/HTTP. This is the primary open-standards-based ingestion path.
+
+**OTLP endpoint:** `https://<tenant>.live.dynatrace.com/api/v2/otlp`
+- Accepts traces, metrics, and logs
+- Uses `Api-Token` authentication with scopes: `openTelemetryTrace.ingest`, `metrics.ingest`, `logs.ingest`
+- Only HTTP is supported (not gRPC)
+- Metrics must use **delta temporality** (use `cumulativetodelta` processor in the Collector)
+
+**Three ingestion paths for OTel data:**
+
+| Path | When to use | dtingest support |
+|---|---|---|
+| **Dynatrace OTel Collector** | Standalone host — collects and forwards all signals | `dtingest install otel-collector` |
+| **Existing OTel Collector** | Already running collector — add Dynatrace exporter | `dtingest install otel-update` |
+| **OTel SDK direct export** | Application sends OTLP directly (no collector) | Supported by runtime; dtingest sets env vars |
+
+**Dynatrace OTel Collector distribution** (from `github.com/Dynatrace/dynatrace-otel-collector`):
+- Curated set of receivers, processors, and exporters verified by Dynatrace
+- Independent security patches from upstream OpenTelemetry releases
+- Covered by Dynatrace support
+- Supports Linux, macOS, Windows × amd64, arm64
+
+**OTel Collector config template** (what dtingest generates):
+```yaml
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: "0.0.0.0:4318"
+exporters:
+  otlphttp/dynatrace:
+    endpoint: "https://<tenant>.live.dynatrace.com/api/v2/otlp"
+    headers:
+      Authorization: "Api-Token <token>"
+processors:
+  cumulativetodelta: {}
+  batch: {}
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/dynatrace]
+    metrics:
+      receivers: [otlp]
+      processors: [cumulativetodelta, batch]
+      exporters: [otlphttp/dynatrace]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/dynatrace]
+```
+
+**Zero-config defaults:**
+- All three signal pipelines (traces, metrics, logs) enabled by default
+- `cumulativetodelta` processor included automatically for metrics
+- Batch processor for efficient delivery
+- OTLP HTTP receiver on port 4318 for receiving data from instrumented apps
+
+**OTel auto-instrumentation for application runtimes:**
+
+| Runtime | dtingest support | Packages installed |
+|---|---|---|
+| Python | `dtingest install otel-python` | `opentelemetry-api`, `opentelemetry-sdk`, `opentelemetry-exporter-otlp`, `opentelemetry-instrumentation` |
+| Java | Future: `dtingest install otel-java` | OpenTelemetry Java agent JAR |
+| Node.js | Future: `dtingest install otel-node` | `@opentelemetry/auto-instrumentations-node` |
+| Go | Future: `dtingest install otel-go` | Manual instrumentation guidance |
+| .NET | Future: `dtingest install otel-dotnet` | OpenTelemetry .NET auto-instrumentation |
+| Ruby | Future | OTel Ruby SDK packages |
+| PHP | Future | OTel PHP auto-instrumentation |
+
+#### 5. Cloud platform integrations
+
+Dynatrace integrates with all major cloud platforms to ingest cloud service metrics, logs, and topology data. These integrations run alongside (not instead of) OneAgent for full-stack visibility.
+
+##### AWS
+
+**What gets ingested:**
+- CloudWatch metrics for all AWS services (EC2, EKS, ECS, Lambda, RDS, S3, DynamoDB, API Gateway, SQS, SNS, Kinesis, etc.)
+- AWS CloudTrail logs and events
+- Cloud topology and tag-based enrichment
+- Cost and resource utilization data
+
+**How dtingest sets it up:**
+- Deploys a CloudFormation stack (`dtingest install aws`) that creates IAM roles for Dynatrace to read CloudWatch metrics
+- Auto-creates the `com.dynatrace.extension.da-aws` monitoring configuration via the Dynatrace API
+- Enables log ingestion for all AWS regions by default
+- Uses `QUICK_START` mode with all standard feature sets enabled
+
+**Zero-config defaults:**
+- All detected AWS services are monitored automatically
+- Log forwarding enabled across all regions
+- No per-service opt-in required — everything is on by default
+
+##### Azure
+
+**What gets ingested:**
+- Azure Monitor metrics for all Azure services (VMs, AKS, Functions, App Services, SQL, Storage, Cosmos DB, Event Hubs, etc.)
+- Azure Activity Log events
+- Cloud topology with resource group and subscription context
+- Tag-based enrichment for ownership and cost allocation
+
+**How dtingest should set it up (planned — R3.10):**
+- Register a Dynatrace Azure integration via the Dynatrace API
+- Create an Azure AD app registration with Reader role for metric collection
+- Enable log forwarding via Azure Event Hub or direct ingestion
+
+**Zero-config defaults (planned):**
+- All detected Azure services monitored automatically
+- Activity Log forwarding enabled
+- Out-of-the-box dashboards and alert templates activated
+
+##### Google Cloud Platform (GCP)
+
+**What gets ingested:**
+- Google Cloud Operations API (formerly Stackdriver) metrics for GCE, GKE, Cloud Functions, Cloud SQL, Cloud Storage, Pub/Sub, Datastore, Memorystore, Load Balancers
+- GCP topology and label-based enrichment
+- Cloud Functions monitoring via OpenTelemetry (GCP client SDKs are pre-instrumented with OTel)
+
+**Deployment model:**
+- Uses the open-source `dynatrace-gcp-function` (Google Cloud Functions that forward metrics to Dynatrace)
+- OneAgent for full-stack monitoring on GCE instances and GKE nodes
+- OpenTelemetry for serverless (Cloud Functions, Cloud Run)
+
+**How dtingest should set it up (planned — R2.12):**
+- Detect GCP environment via metadata service or `gcloud` CLI
+- Deploy the `dynatrace-gcp-function` integration
+- Configure GCP service account with monitoring read permissions
+
+#### 6. Log ingestion paths
+
+Dynatrace supports multiple log ingestion paths, all landing in Grail for unified DQL-based querying:
+
+| Path | Data flow | dtingest relevance |
+|---|---|---|
+| **OneAgent log monitoring** | OneAgent reads local log files and container stdout | Enabled by default with `--set-app-log-content-access=true` |
+| **OTel Collector log pipeline** | OTLP logs → Collector → Dynatrace OTLP endpoint | `dtingest install otel-collector` (logs pipeline enabled) |
+| **Log ingest API** | Direct HTTP POST to `/api/v2/logs/ingest` | Used for verification in `dtingest install otel-collector` |
+| **Cloud log forwarding** | AWS CloudTrail / Azure Activity Log / GCP ops logs | Enabled as part of cloud integrations |
+| **Fluentd / Fluent Bit** | Third-party log shippers → Dynatrace API | Not directly managed by dtingest |
+| **Generic log ingestion API** | REST API for custom log sources | Not directly managed by dtingest |
+
+#### 7. Metrics ingestion paths
+
+| Path | Protocol | dtingest relevance |
+|---|---|---|
+| **OneAgent** | Built-in (process, host, container metrics) | Automatic with OneAgent |
+| **OTLP metrics** | OTLP/HTTP to `/api/v2/otlp` | OTel Collector pipelines |
+| **Metrics ingest API** | POST to `/api/v2/metrics/ingest` (line protocol) | Not directly managed |
+| **Prometheus scraping** | Dynatrace scrapes Prometheus `/metrics` endpoints | Via Operator annotations or ActiveGate |
+| **StatsD** | UDP StatsD protocol | Via ActiveGate extension |
+| **Cloud metrics** | CloudWatch / Azure Monitor / GCP Operations API | Cloud integrations |
+
+#### 8. Traces / distributed tracing
+
+| Path | Protocol | dtingest relevance |
+|---|---|---|
+| **OneAgent** | PurePath (proprietary) + OTel trace enrichment | Automatic with OneAgent |
+| **OTLP traces** | OTLP/HTTP to `/api/v2/otlp` | OTel Collector or direct SDK export |
+| **Zipkin** | Zipkin v2 JSON | Via OTel Collector zipkin receiver |
+
+#### 9. Extensions Framework 2.0 (EF2)
+
+Dynatrace Extensions 2.0 provide monitoring for technologies without native OneAgent support — databases (Oracle, MSSQL, PostgreSQL), network devices (SNMP), custom metrics, and third-party APIs. Extensions run on the Extension Execution Controller (EEC), which is deployed as part of the Kubernetes Operator or as part of an ActiveGate.
+
+**dtingest's role:** The Kubernetes installer deploys the EEC automatically. Standalone EEC/ActiveGate deployment for bare-metal monitoring is a future consideration.
+
+### Signal coverage matrix
+
+This table shows which signals each ingestion method provides:
+
+| Method | Metrics | Traces | Logs | Topology | RUM | Security |
+|---|---|---|---|---|---|---|
+| **OneAgent (full-stack)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Dynatrace Operator (K8s)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **OTel Collector** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **AWS CloudFormation** | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **Azure integration** | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **GCP integration** | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **Log ingest API** | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Metrics ingest API** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### Zero-config philosophy for dtingest
+
+The core principle: **if we detect it, we enable monitoring for it — no questions asked.**
+
+| What we detect | What we auto-enable |
+|---|---|
+| Kubernetes cluster | Dynatrace Operator in `cloudNativeFullStack` mode (full pod injection + infrastructure monitoring + log collection) |
+| Docker without K8s | OneAgent container with full-stack monitoring |
+| Bare-metal Linux/Windows | OneAgent with app log content access |
+| AWS account | CloudFormation stack with all services + log forwarding for all regions |
+| Azure subscription | Azure Monitor integration with all services (planned) |
+| GCP project | GCP integration with Operations API metrics (planned) |
+| Running OTel Collector | Add Dynatrace exporter to all existing pipelines |
+| Python/Java/Node runtime | OTel auto-instrumentation with all signals enabled |
+| No agent possible (macOS dev) | OTel Collector + runtime auto-instrumentation |
+
+**What "turn all defaults on" means concretely:**
+- OneAgent: full-stack mode, not infrastructure-only
+- Kubernetes: `cloudNativeFullStack`, not `classicFullStack` or `applicationMonitoring`
+- OTel Collector: all three pipelines (traces + metrics + logs), not just one
+- AWS: all service feature sets in `QUICK_START` mode, logs enabled for all regions
+- Cloud integrations: monitor all detected services, not a hand-picked subset
+- Log content access: always enabled (not just metadata)
+
+### Token scopes required per ingestion method
+
+| Method | Token type | Required scopes |
+|---|---|---|
+| **OneAgent install** | API token (`dt0c01.*`) | `InstallerDownload` |
+| **OTel Collector** | API token (`dt0c01.*`) | `openTelemetryTrace.ingest`, `metrics.ingest`, `logs.ingest` |
+| **OTel direct SDK** | API token (`dt0c01.*`) | `openTelemetryTrace.ingest`, `metrics.ingest`, `logs.ingest` |
+| **AWS CloudFormation** | API token (`dt0c01.*`) | `settings:objects:write`, `extensions:configurations:write`, `extensions:configurations:read` (settings token) + `data-acquisition:logs:ingest`, `data-acquisition:events:ingest` (ingest token) |
+| **Kubernetes Operator** | API token (`dt0c01.*`) | Uses `Kubernetes Data Ingest` template scopes |
+| **DQL queries** | OAuth / platform token | `storage:logs:read`, `storage:metrics:read` |
+
+### Dynatrace Hub & ecosystem context
+
+The Dynatrace Hub (`dynatrace.com/hub`) lists 875+ integrations. Key categories relevant to dtingest:
+
+- **Cloud platforms:** AWS, Azure, GCP — native integrations with CloudWatch, Azure Monitor, GCP Operations API
+- **Kubernetes:** All-in-one K8s observability app, EKS/AKS/GKE specific integrations
+- **OpenTelemetry:** Native OTLP support, OTel Collector distribution, per-language walkthroughs
+- **Databases:** Oracle, PostgreSQL, MySQL, MongoDB, Redis, Cosmos DB, DynamoDB — via Extensions 2.0 or OneAgent
+- **Message queues:** Kafka (Confluent Cloud), RabbitMQ, SQS, SNS — via Extensions or OTel
+- **AI/ML:** NVIDIA GPU monitoring, Ollama, LangGraph, LlamaIndex, TensorFlow Keras, OpenAI
+- **Log shippers:** Fluentd, Fluent Bit, generic log ingest API
+- **CI/CD:** GitHub, GitLab, Azure DevOps pipeline observability
+- **Prometheus:** Native scraping in Kubernetes via Dynatrace Operator annotations
+
 ## Current state
 
 The analyzer detects: platform/OS, container runtime (Docker), Kubernetes (with distribution and context), OneAgent, OTel Collector, AWS, Azure, and running services.
