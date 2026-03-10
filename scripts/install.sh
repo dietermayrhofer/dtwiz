@@ -7,9 +7,7 @@
 # By default the binary is installed to /usr/local/bin (requires sudo) or
 # ~/bin if /usr/local/bin is not writable.  Pass --install-dir to override.
 #
-# The script requires either:
-#   • the GitHub CLI (gh) — recommended for private repos, or
-#   • curl + a GITHUB_TOKEN environment variable with repo read access.
+# The script requires curl.
 
 set -e
 
@@ -52,19 +50,15 @@ esac
 echo "Detected platform: ${OS}/${ARCH}"
 
 # ── Resolve latest release version ────────────────────────────────────────────
-if command -v gh >/dev/null 2>&1; then
-    VERSION="$(gh release view --repo "$REPO" --json tagName -q '.tagName' 2>/dev/null)"
-elif [ -n "$GITHUB_TOKEN" ]; then
-    VERSION="$(curl -fsSL \
-        -H "Authorization: Bearer $GITHUB_TOKEN" \
-        -H "Accept: application/vnd.github+json" \
-        "https://api.github.com/repos/${REPO}/releases/latest" \
-        | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')"
-else
-    echo "Error: neither 'gh' CLI nor GITHUB_TOKEN is available." >&2
-    echo "  Install the GitHub CLI (https://cli.github.com/) or set GITHUB_TOKEN." >&2
+if ! command -v curl >/dev/null 2>&1; then
+    echo "Error: curl is required but not found." >&2
     exit 1
 fi
+
+# Follow the /releases/latest redirect to extract the tag from the final URL.
+VERSION="$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+    "https://github.com/${REPO}/releases/latest" \
+    | sed 's|.*/||')"
 
 if [ -z "$VERSION" ]; then
     echo "Error: could not determine the latest dtingest version." >&2
@@ -78,17 +72,9 @@ ARCHIVE="dtingest_${VERSION#v}_${OS}_${ARCH}.tar.gz"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT INT TERM
 
-if command -v gh >/dev/null 2>&1; then
-    gh release download "$VERSION" \
-        --repo "$REPO" \
-        --pattern "$ARCHIVE" \
-        --dir "$WORK_DIR"
-else
-    curl -fsSL \
-        -H "Authorization: Bearer $GITHUB_TOKEN" \
-        "https://github.com/${REPO}/releases/download/${VERSION}/${ARCHIVE}" \
-        -o "${WORK_DIR}/${ARCHIVE}"
-fi
+curl -fsSL \
+    "https://github.com/${REPO}/releases/download/${VERSION}/${ARCHIVE}" \
+    -o "${WORK_DIR}/${ARCHIVE}"
 
 tar -xzf "${WORK_DIR}/${ARCHIVE}" -C "$WORK_DIR"
 

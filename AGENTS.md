@@ -69,6 +69,51 @@ and everything works without `dtingest` needing to know about tokens or URL vari
 - **Read/query operations** (logs, metrics, entities): shell out to `dtctl query` or other `dtctl` subcommands.
 - **Write/ingest operations** (sending logs, metrics, traces): direct HTTP to the ingest endpoint is fine — those use simple API tokens with narrow ingest-only scopes that are already available.
 
+## Dynatrace URL & API families
+
+Dynatrace exposes **two distinct URL families** that point to the same environment but terminate on different routing layers. Getting this wrong produces 404s or auth errors.
+
+### Environment (classic) APIs — **no** `.apps.`
+
+| | |
+|---|---|
+| **Pattern** | `https://<env-id>.<cluster-domain>/api/...` |
+| **Example** | `https://fxz0998d.dev.dynatracelabs.com/api/v2/metrics` |
+| **Auth** | API tokens (`Api-Token …`) |
+
+Hosts: Metrics v2, Entities/topology, Problems & events, Configuration APIs, Logs (environment APIs), OneAgent installer download — everything that historically existed before the Dynatrace Platform.
+
+### Platform & Apps APIs — **with** `.apps.`
+
+| | |
+|---|---|
+| **Pattern** | `https://<env-id>.apps.<cluster-domain>/platform/...` |
+| **Example** | `https://fxz0998d.apps.dev.dynatracelabs.com/platform/storage/query` |
+| **Auth** | OAuth / platform tokens |
+
+Hosts: DQL / Grail queries, Platform APIs, AppEngine & app functions, Platform OAuth — the new "platform-first" services.
+
+### Which one to use
+
+| Use **without** `.apps.` | Use **with** `.apps.` |
+|---|---|
+| Path starts with `/api/v1` or `/api/v2` | Path starts with `/platform/...` |
+| Metrics, problems, entities, config | DQL or Grail |
+| `Api-Token` authentication | OAuth / platform tokens required |
+| Scripts, Terraform, CI, exporters | Dynatrace Apps, AppEngine |
+
+### Why two families exist
+
+Dynatrace is mid-transition from an environment-centric model (`/api/v1`, `/api/v2`, API tokens) to a platform-centric model (`/platform/...`, OAuth). Both stacks run in parallel so existing integrations don't break.
+
+### How dtingest handles this
+
+- **`APIURL()` / `ClassicAPIURL()`** — strip `.apps.` to produce the classic API base URL (used for OneAgent download, `/api/v2` calls).
+- **`toAppsURL()`** — insert `.apps.` to produce the platform URL (used for Logs UI deep-links, DQL queries).
+- **`dtctl` shell-outs** — `dtctl query` auto-selects the correct URL family based on the active context, so dtingest doesn't need to pick.
+
+> **If an endpoint returns 404 or auth errors, the URL family is usually the problem — not the token.**
+
 ## Releases
 
 Releases are built and published with **GoReleaser** (`.goreleaser.yaml`). GoReleaser cross-compiles for all supported platforms, creates archives, and uploads them to the GitHub release.

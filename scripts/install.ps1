@@ -7,9 +7,7 @@
 # Pass -InstallDir to override.  The install directory is added permanently
 # to the current user's PATH.
 #
-# The script requires either:
-#   • the GitHub CLI (gh) — recommended for private repos, or
-#   • a GITHUB_TOKEN environment variable with repo read access.
+# The script requires an internet connection (uses Invoke-WebRequest).
 #
 # Run once to allow execution:
 #   Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
@@ -36,25 +34,21 @@ switch ($RawArch) {
 Write-Host "Detected platform: windows/$Arch"
 
 # ── Resolve latest release version ────────────────────────────────────────────
-$ghAvailable = $null -ne (Get-Command gh -ErrorAction SilentlyContinue)
-$githubToken = $env:GITHUB_TOKEN
-
-if ($ghAvailable) {
-    $Version = (gh release view --repo $Repo --json tagName -q ".tagName" 2>$null).Trim()
-} elseif ($githubToken) {
-    $Headers = @{
-        "Authorization" = "Bearer $githubToken"
-        "Accept"        = "application/vnd.github+json"
+# Follow the /releases/latest redirect to extract the tag from the final URL.
+$Response = Invoke-WebRequest `
+    -Uri "https://github.com/$Repo/releases/latest" `
+    -MaximumRedirection 0 `
+    -ErrorAction SilentlyContinue `
+    -UseBasicParsing
+$RedirectUrl = $Response.Headers.Location
+if (-not $RedirectUrl) {
+    # Some PS versions follow the redirect automatically
+    $RedirectUrl = $Response.BaseResponse.ResponseUri.AbsoluteUri
+    if (-not $RedirectUrl) {
+        $RedirectUrl = $Response.BaseResponse.RequestMessage.RequestUri.AbsoluteUri
     }
-    $Release = Invoke-RestMethod `
-        -Uri "https://api.github.com/repos/$Repo/releases/latest" `
-        -Headers $Headers
-    $Version = $Release.tag_name
-} else {
-    Write-Error ("Neither 'gh' CLI nor GITHUB_TOKEN is available.`n" +
-                 "  Install the GitHub CLI (https://cli.github.com/) or set GITHUB_TOKEN.")
-    exit 1
 }
+$Version = ($RedirectUrl -split '/')[-1]
 
 if (-not $Version) {
     Write-Error "Could not determine the latest dtingest version."
@@ -72,16 +66,8 @@ New-Item -ItemType Directory -Path $TmpDir | Out-Null
 try {
     $ArchivePath = Join-Path $TmpDir $Archive
 
-    if ($ghAvailable) {
-        gh release download $Version `
-            --repo $Repo `
-            --pattern $Archive `
-            --dir $TmpDir
-    } else {
-        $DownloadUrl = "https://github.com/$Repo/releases/download/$Version/$Archive"
-        $Headers = @{ "Authorization" = "Bearer $githubToken" }
-        Invoke-WebRequest -Uri $DownloadUrl -OutFile $ArchivePath -Headers $Headers
-    }
+    $DownloadUrl = "https://github.com/$Repo/releases/download/$Version/$Archive"
+    Invoke-WebRequest -Uri $DownloadUrl -OutFile $ArchivePath -UseBasicParsing
 
     Expand-Archive -Path $ArchivePath -DestinationPath $TmpDir -Force
 
