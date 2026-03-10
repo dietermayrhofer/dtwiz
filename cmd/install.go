@@ -20,7 +20,8 @@ var installOneAgentCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return installer.InstallOneAgent(envURL, token, installDryRun)
+		quiet, _ := cmd.Flags().GetBool("quiet")
+		return installer.InstallOneAgent(envURL, token, installDryRun, quiet)
 	},
 }
 
@@ -104,6 +105,7 @@ func init() {
 	installOtelUpdateCmd.Flags().StringVar(&otelUpdateConfigPath, "config", "config.yaml", "path to the existing OTel Collector config file to patch")
 	installOtelPythonCmd.Flags().StringVar(&otelPythonServiceName, "service-name", "", "OTEL_SERVICE_NAME for the instrumented application (default: my-service)")
 
+	installOneAgentCmd.Flags().Bool("quiet", false, "Run a silent/unattended installation with no output")
 	installCmd.AddCommand(installOneAgentCmd)
 	installCmd.AddCommand(installKubernetesCmd)
 	installCmd.AddCommand(installDockerCmd)

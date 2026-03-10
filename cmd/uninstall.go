@@ -18,6 +18,17 @@ var uninstallKubernetesCmd = &cobra.Command{
 	},
 }
 
+var uninstallOneAgentCmd = &cobra.Command{
+	Use:   "oneagent",
+	Short: "Uninstall Dynatrace OneAgent from this host",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		return installer.UninstallOneAgent(dryRun)
+	},
+}
+
 func init() {
+	uninstallOneAgentCmd.Flags().Bool("dry-run", false, "Show what would be done without making changes")
 	uninstallCmd.AddCommand(uninstallKubernetesCmd)
+	uninstallCmd.AddCommand(uninstallOneAgentCmd)
 }

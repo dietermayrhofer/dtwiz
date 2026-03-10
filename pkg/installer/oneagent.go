@@ -141,7 +141,8 @@ func downloadOneAgentInstaller(apiURL, token string) (string, error) {
 //   - envURL: Dynatrace environment URL (apps or live)
 //   - token:  API token with installation permissions
 //   - dryRun: when true, only print what would be done
-func InstallOneAgent(envURL, token string, dryRun bool) error {
+//   - quiet:  when true, suppress output and skip confirmation
+func InstallOneAgent(envURL, token string, dryRun, quiet bool) error {
 	apiURL := APIURL(envURL)
 
 	if dryRun {
@@ -150,10 +151,15 @@ func InstallOneAgent(envURL, token string, dryRun bool) error {
 		fmt.Printf("  API URL:          %s\n", apiURL)
 		fmt.Printf("  Installer type:   %s / arch: %s\n", iType, arch)
 		fmt.Printf("  Install mode:     %s\n", InstallModeFullStack)
+		if quiet {
+			fmt.Println("  Quiet mode:       yes")
+		}
 		return nil
 	}
 
-	fmt.Println("  Checking API connectivity...")
+	if !quiet {
+		fmt.Println("  Checking API connectivity...")
+	}
 	if err := checkOneAgentConnectivity(apiURL, token); err != nil {
 		return err
 	}
@@ -164,25 +170,36 @@ func InstallOneAgent(envURL, token string, dryRun bool) error {
 	}
 	defer os.Remove(installerPath)
 
-	fmt.Printf("  Running installer: %s\n", filepath.Base(installerPath))
+	args := buildOneAgentInstallerArgs(installerPath, apiURL, quiet)
 
-	args := buildOneAgentInstallerArgs(installerPath, apiURL)
-	if err := RunCommand(args[0], args[1:]...); err != nil {
-		return fmt.Errorf("OneAgent installation failed: %w", err)
+	if quiet {
+		if err := RunCommandQuiet(args[0], args[1:]...); err != nil {
+			return fmt.Errorf("OneAgent installation failed: %w", err)
+		}
+	} else {
+		fmt.Printf("  Running installer: %s\n", filepath.Base(installerPath))
+		if err := RunCommand(args[0], args[1:]...); err != nil {
+			return fmt.Errorf("OneAgent installation failed: %w", err)
+		}
+		fmt.Println("  OneAgent installed successfully.")
 	}
 
-	fmt.Println("  OneAgent installed successfully.")
 	return nil
 }
 
 // buildOneAgentInstallerArgs returns the command and arguments to run the
-// downloaded installer, varying by OS.
-func buildOneAgentInstallerArgs(installerPath, apiURL string) []string {
+// downloaded installer, varying by OS. When quiet is true, the native quiet
+// flags are appended so the installer produces no interactive output.
+func buildOneAgentInstallerArgs(installerPath, apiURL string, quiet bool) []string {
 	if runtime.GOOS == "windows" {
-		return []string{
+		args := []string{
 			installerPath,
 			"--set-app-log-content-access=true",
 		}
+		if quiet {
+			args = append(args, "/quiet", "/qn")
+		}
+		return args
 	}
 
 	// Linux shell installer — needs sudo if not already root.

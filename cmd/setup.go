@@ -91,7 +91,7 @@ var setupCmd = &cobra.Command{
 
 		switch selected.Method {
 		case recommender.MethodOneAgent:
-			return installer.InstallOneAgent(envURL, token, setupDryRun)
+			return installer.InstallOneAgent(envURL, token, setupDryRun, false)
 		case recommender.MethodKubernetes:
 			return installer.InstallKubernetes(envURL, token, accessToken(), "" /* name */, setupDryRun)
 		case recommender.MethodDocker:
