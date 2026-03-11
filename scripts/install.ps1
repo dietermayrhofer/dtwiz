@@ -66,9 +66,28 @@ if (-not $Version) {
     exit 1
 }
 
-Write-Host "Downloading dtingest $Version..."
+# ── Determine install directory ────────────────────────────────────────────────
+if (-not $InstallDir) {
+    $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\dtingest"
+}
+
+# ── Confirm installation ──────────────────────────────────────────────────────
+Write-Host ""
+Write-Host "This will download and install dtingest $Version:"
+Write-Host "  * Download from github.com/$Repo"
+Write-Host "  * Install to $InstallDir"
+Write-Host "  * Add $InstallDir to your user PATH (if not already present)"
+Write-Host ""
+$Confirm = Read-Host "Continue? [Y/n]"
+if ($Confirm -match '^[Nn]') {
+    Write-Host "Installation cancelled."
+    exit 0
+}
 
 # ── Download and extract ───────────────────────────────────────────────────────
+Write-Host ""
+Write-Host "Downloading dtingest $Version..."
+
 $VersionNum = $Version.TrimStart("v")
 $Archive    = "dtingest_${VersionNum}_windows_${Arch}.zip"
 $TmpDir     = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
@@ -86,23 +105,6 @@ try {
     if (-not (Test-Path $ExtractedBinary)) {
         Write-Error "dtingest.exe not found after extraction."
         exit 1
-    }
-
-    # ── Determine install directory ────────────────────────────────────────────
-    if (-not $InstallDir) {
-        $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\dtingest"
-    }
-
-    # ── Confirm installation ──────────────────────────────────────────────────
-    Write-Host ""
-    Write-Host "This will:"
-    Write-Host "  * Install dtingest $Version to $InstallDir"
-    Write-Host "  * Add $InstallDir to your user PATH (if not already present)"
-    Write-Host ""
-    $Confirm = Read-Host "Continue? [Y/n]"
-    if ($Confirm -match '^[Nn]') {
-        Write-Host "Installation cancelled."
-        exit 0
     }
 
     if (-not (Test-Path $InstallDir)) {

@@ -65,9 +65,34 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 
-echo "Downloading dtingest ${VERSION}..."
+# ── Determine install directory ────────────────────────────────────────────────
+if [ -z "$INSTALL_DIR" ]; then
+    if [ -w "/usr/local/bin" ]; then
+        INSTALL_DIR="/usr/local/bin"
+    else
+        INSTALL_DIR="$HOME/bin"
+    fi
+fi
+
+# ── Confirm installation ───────────────────────────────────────────────────────
+echo ""
+echo "This will download and install dtingest ${VERSION}:"
+echo "  - Download from github.com/${REPO}"
+echo "  - Install to ${INSTALL_DIR}"
+echo "  - Add ${INSTALL_DIR} to your PATH (if not already present)"
+echo ""
+printf 'Continue? [Y/n] '
+read -r REPLY </dev/tty
+case "$REPLY" in
+    [Nn]|[Nn][Oo])
+        echo "Installation cancelled."
+        exit 0 ;;
+esac
 
 # ── Download and extract ───────────────────────────────────────────────────────
+echo ""
+echo "Downloading dtingest ${VERSION}..."
+
 ARCHIVE="dtingest_${VERSION#v}_${OS}_${ARCH}.tar.gz"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT INT TERM
@@ -84,30 +109,6 @@ if [ ! -f "${WORK_DIR}/dtingest" ]; then
 fi
 
 chmod +x "${WORK_DIR}/dtingest"
-
-# ── Determine install directory ────────────────────────────────────────────────
-if [ -z "$INSTALL_DIR" ]; then
-    if [ -w "/usr/local/bin" ]; then
-        INSTALL_DIR="/usr/local/bin"
-    else
-        INSTALL_DIR="$HOME/bin"
-    fi
-fi
-
-# ── Confirm installation ───────────────────────────────────────────────────────
-echo ""
-echo "This will:"
-echo "  - Install dtingest ${VERSION} to ${INSTALL_DIR}"
-echo "  - Add ${INSTALL_DIR} to your PATH (if not already present)"
-echo ""
-printf 'Continue? [Y/n] '
-read -r REPLY </dev/tty
-case "$REPLY" in
-    [Nn]|[Nn][Oo])
-        echo "Installation cancelled."
-        exit 0 ;;
-esac
-
 mkdir -p "$INSTALL_DIR"
 
 # ── Install binary ─────────────────────────────────────────────────────────────
