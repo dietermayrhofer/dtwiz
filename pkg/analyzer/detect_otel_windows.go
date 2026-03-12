@@ -19,11 +19,21 @@ func detectOtelCollector() (bool, string, string) {
 	for _, name := range processNames {
 		// Strip the .exe suffix for Get-Process -Name which doesn't want it.
 		baseName := strings.TrimSuffix(name, ".exe")
-		ok, _ := runCmd("powershell", "-NoProfile", "-Command",
+		ok, pidOutput := runCmd("powershell", "-NoProfile", "-Command",
 			"Get-Process -Name '"+baseName+"' -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object { $_.Id }")
-		if ok {
-			// Found the process — now get its full command line to extract config path.
-			binPath, configPath := otelInfoFromProcessName(baseName)
+		if ok && strings.TrimSpace(pidOutput) != "" {
+			// Get the executable path directly from Get-Process (doesn't need elevation).
+			binPath := ""
+			okPath, pathOutput := runCmd("powershell", "-NoProfile", "-Command",
+				"Get-Process -Name '"+baseName+"' -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Path")
+			if okPath && strings.TrimSpace(pathOutput) != "" {
+				binPath = strings.TrimSpace(pathOutput)
+			}
+			// Try to get the command line for config path extraction.
+			_, configPath := otelInfoFromProcessName(baseName)
+			if binPath == "" {
+				binPath = baseName + ".exe"
+			}
 			return true, binPath, configPath
 		}
 	}

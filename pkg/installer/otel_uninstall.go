@@ -46,14 +46,23 @@ func binaryPathFromPID(pid int) string {
 	var out []byte
 	var err error
 	if runtime.GOOS == "windows" {
-		out, err = exec.Command("wmic", "process", "where", "ProcessId="+pidStr, "get", "ExecutablePath", "/value").Output()
+		out, err = exec.Command("powershell", "-NoProfile", "-Command",
+			fmt.Sprintf("(Get-CimInstance Win32_Process -Filter \"ProcessId=%s\").ExecutablePath", pidStr)).Output()
 	} else {
 		out, err = exec.Command("ps", "-p", pidStr, "-o", "args=").Output()
 	}
 	if err != nil {
 		return ""
 	}
-	fields := strings.Fields(strings.TrimSpace(string(out)))
+	result := strings.TrimSpace(string(out))
+	if runtime.GOOS == "windows" {
+		// PowerShell returns the full path as a single line.
+		if result == "" {
+			return ""
+		}
+		return result
+	}
+	fields := strings.Fields(result)
 	if len(fields) == 0 {
 		return ""
 	}

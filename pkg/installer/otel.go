@@ -570,26 +570,7 @@ func generateOtelConfig(apiURL, token string) (string, error) {
 // processes (there may be more than one if a previous kill was incomplete).
 func findRunningOtelCollectors() []int {
 	if runtime.GOOS == "windows" {
-		out, err := exec.Command("tasklist", "/FI", "IMAGENAME eq dynatrace-otel-collector.exe", "/FO", "CSV", "/NH").Output()
-		if err != nil {
-			return nil
-		}
-		var pids []int
-		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-			if !strings.Contains(line, "dynatrace-otel-collector.exe") {
-				continue
-			}
-			parts := strings.Split(line, ",")
-			if len(parts) < 2 {
-				continue
-			}
-			pidStr := strings.Trim(parts[1], "\"")
-			pid, err := strconv.Atoi(pidStr)
-			if err == nil {
-				pids = append(pids, pid)
-			}
-		}
-		return pids
+		return findRunningOtelCollectorsWindows()
 	}
 	// Unix: use -f to match the full command line, catching processes started
 	// via an absolute path or through a wrapper (e.g. go run).
@@ -604,6 +585,53 @@ func findRunningOtelCollectors() []int {
 			pids = append(pids, pid)
 		}
 	}
+	return pids
+}
+
+// findRunningOtelCollectorsWindows searches for all known OTel Collector
+// process names on Windows, matching the same set the analyzer detects.
+func findRunningOtelCollectorsWindows() []int {
+	processNames := []string{
+		"dynatrace-otel-collector",
+		"otelcol",
+		"otelcol-contrib",
+	}
+	seen := map[int]bool{}
+	var pids []int
+
+	for _, name := range processNames {
+		out, err := exec.Command("powershell", "-NoProfile", "-Command",
+			"Get-Process -Name '"+name+"' -ErrorAction SilentlyContinue | ForEach-Object { $_.Id }").Output()
+		if err != nil {
+			continue
+		}
+		for _, s := range strings.Fields(strings.TrimSpace(string(out))) {
+			pid, err := strconv.Atoi(s)
+			if err == nil && !seen[pid] {
+				seen[pid] = true
+				pids = append(pids, pid)
+			}
+		}
+	}
+
+	// Fall back to command-line search for custom-named builds.
+	if len(pids) == 0 {
+		for _, pattern := range []string{"otel-collector", "otelcol"} {
+			out, err := exec.Command("powershell", "-NoProfile", "-Command",
+				"Get-CimInstance Win32_Process | Where-Object { $_.Name -match '"+pattern+"' } | ForEach-Object { $_.ProcessId }").Output()
+			if err != nil {
+				continue
+			}
+			for _, s := range strings.Fields(strings.TrimSpace(string(out))) {
+				pid, err := strconv.Atoi(s)
+				if err == nil && !seen[pid] {
+					seen[pid] = true
+					pids = append(pids, pid)
+				}
+			}
+		}
+	}
+
 	return pids
 }
 
