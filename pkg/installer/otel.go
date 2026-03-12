@@ -543,11 +543,33 @@ func verifyOtelInstall(envURL, platformToken, apiToken string, crashed <-chan er
 	return nil
 }
 
-// termLink returns an OSC 8 terminal hyperlink so modern terminals render
-// label as a clickable link instead of printing the raw URL.
+// termSupportsOSC8 reports whether the current terminal likely supports OSC 8
+// hyperlinks. VS Code, iTerm2, WezTerm, and Windows Terminal do; macOS
+// Terminal.app (Apple_Terminal) and plain xterm do not.
+func termSupportsOSC8() bool {
+	switch os.Getenv("TERM_PROGRAM") {
+	case "vscode", "iTerm.app", "WezTerm", "Hyper":
+		return true
+	}
+	// Windows Terminal sets WT_SESSION (not TERM_PROGRAM).
+	if os.Getenv("WT_SESSION") != "" {
+		return true
+	}
+	// GNOME Terminal / VTE-based terminals.
+	if os.Getenv("VTE_VERSION") != "" {
+		return true
+	}
+	return false
+}
+
+// termLink returns a clickable terminal hyperlink when the terminal supports
+// OSC 8, otherwise returns "label: url" so the user can copy-paste the URL.
 func termLink(label, url string) string {
-	// Format: ESC]8;;URL ESC\ label ESC]8;; ESC\
-	return fmt.Sprintf("\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\", url, label)
+	if termSupportsOSC8() {
+		// Format: ESC]8;;URL ESC\ label ESC]8;; ESC\
+		return fmt.Sprintf("\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\", url, label)
+	}
+	return fmt.Sprintf("%s:\n    %s", label, url)
 }
 
 // generateOtelConfig renders otel.tmpl and returns a collector configuration YAML string.
