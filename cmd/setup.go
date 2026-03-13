@@ -28,7 +28,6 @@ var setupCmd = &cobra.Command{
 		setupMuted := color.New()
 		setupPrompt := color.New(color.FgCyan)
 		setupBadge := color.New(color.FgCyan, color.Bold)
-		setupTitle := color.New(color.FgWhite, color.Bold)
 
 		setupHeader.Println("  Analyzing system...")
 		setupMuted.Println("  " + strings.Repeat("─", 42))
@@ -56,7 +55,7 @@ var setupCmd = &cobra.Command{
 		}
 
 		for i, r := range actionable {
-			fmt.Printf("  %s  %s\n", setupBadge.Sprintf("[%d]", i+1), setupTitle.Sprint(r.Title))
+		fmt.Printf("  %s  %s\n", setupBadge.Sprintf("[%d]", i+1), r.Title)
 		}
 		fmt.Printf("  %s  %s\n", setupMuted.Sprint("[0]"), setupMuted.Sprint("Cancel"))
 		fmt.Println()

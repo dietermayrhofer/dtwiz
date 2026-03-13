@@ -11,7 +11,7 @@ import (
 var (
 	statusOK    = color.New(color.FgGreen, color.Bold)
 	statusError = color.New(color.FgRed, color.Bold)
-	statusLabel = color.New(color.FgWhite, color.Bold)
+	statusLabel = color.New()
 	statusMuted = color.New()
 	statusHead  = color.New(color.FgCyan, color.Bold)
 )

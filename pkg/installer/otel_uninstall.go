@@ -132,7 +132,6 @@ func UninstallOtelCollector(dryRun bool) error {
 	header := color.New(color.FgCyan, color.Bold)
 	muted := color.New()
 	red := color.New(color.FgRed)
-	bold := color.New(color.FgWhite, color.Bold)
 
 	processes := findRunningOtelProcesses()
 	dirs := candidateOtelDirs(processes)
@@ -148,7 +147,7 @@ func UninstallOtelCollector(dryRun bool) error {
 	}
 
 	if len(processes) > 0 {
-		bold.Println("  Processes that will be killed:")
+		fmt.Println("  Processes that will be killed:")
 		for _, p := range processes {
 			hint := ""
 			if p.binaryPath != "" {
@@ -165,7 +164,7 @@ func UninstallOtelCollector(dryRun bool) error {
 	}
 
 	if len(dirs) > 0 {
-		bold.Println("  Directories that will be removed:")
+		fmt.Println("  Directories that will be removed:")
 		for _, d := range dirs {
 			fmt.Printf("    ")
 			red.Printf("rm -rf %s\n", d)

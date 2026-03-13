@@ -128,10 +128,8 @@ type SystemInfo struct {
 }
 
 var (
-	colorHeader  = color.New(color.FgCyan, color.Bold)
-	colorLabel   = color.New(color.FgWhite, color.Bold)
-	colorMuted   = color.New()
-	colorValue   = color.New(color.FgWhite)
+	colorHeader = color.New(color.FgCyan, color.Bold)
+	colorMuted  = color.New()
 )
 
 const (
@@ -139,7 +137,7 @@ const (
 )
 
 func label(s string) string {
-	return colorLabel.Sprintf("%-*s", labelWidth, s+":")
+	return fmt.Sprintf("%-*s", labelWidth, s+":")
 }
 
 // Summary returns a human-readable summary of the system analysis.
@@ -157,22 +155,21 @@ func (s *SystemInfo) Summary() string {
 	if osName == "" {
 		osName = string(s.Platform)
 	}
-	sb.WriteString(fmt.Sprintf("  %s %s\n",
-		label("Platform"),
-		colorValue.Sprintf("%s  %s", osName, s.Arch)+colorValue.Sprintf("  (%s)", s.Hostname)))
+	sb.WriteString(fmt.Sprintf("  %s %s  %s  (%s)\n",
+		label("Platform"), osName, s.Arch, s.Hostname))
 
 	if s.OtelCollector {
 		var line string
 		if s.OtelBinaryPath != "" {
-			line = colorValue.Sprint(s.OtelBinaryPath)
+			line = s.OtelBinaryPath
 			if s.OtelConfigPath != "" {
-				line += colorMuted.Sprint("  config=") + colorValue.Sprint(s.OtelConfigPath)
+				line += "  config=" + s.OtelConfigPath
 			}
-			line += colorMuted.Sprint("  (running)")
+			line += "  (running)"
 		} else if s.OtelConfigPath != "" {
-			line = colorValue.Sprint(s.OtelConfigPath) + colorMuted.Sprint("  (running)")
+			line = s.OtelConfigPath + "  (running)"
 		} else {
-			line = colorValue.Sprint("running")
+			line = "running"
 		}
 		sb.WriteString(fmt.Sprintf("  %s %s\n", label("OpenTelemetry"), line))
 	} else {
@@ -182,10 +179,10 @@ func (s *SystemInfo) Summary() string {
 	}
 
 	if s.Docker != nil && s.Docker.Available {
-		sb.WriteString(fmt.Sprintf("  %s version %s, %s containers running\n",
+		sb.WriteString(fmt.Sprintf("  %s version %s, %d containers running\n",
 			label("Docker"),
-			colorValue.Sprint(s.Docker.ServerVersion),
-			colorValue.Sprintf("%d", s.Docker.RunningContainerCount)))
+			s.Docker.ServerVersion,
+			s.Docker.RunningContainerCount))
 	} else {
 		sb.WriteString(fmt.Sprintf("  %s %s\n",
 			label("Docker"),
@@ -193,11 +190,11 @@ func (s *SystemInfo) Summary() string {
 	}
 
 	if s.Kubernetes != nil && s.Kubernetes.Available {
-		sb.WriteString(fmt.Sprintf("  %s dist=%s  context=%s  nodes=%s\n",
+		sb.WriteString(fmt.Sprintf("  %s dist=%s  context=%s  nodes=%d\n",
 			label("Kubernetes"),
-			colorValue.Sprint(s.Kubernetes.Distribution),
-			colorValue.Sprint(s.Kubernetes.Context),
-			colorValue.Sprintf("%d", s.Kubernetes.NodeCount)))
+			s.Kubernetes.Distribution,
+			s.Kubernetes.Context,
+			s.Kubernetes.NodeCount))
 	} else {
 		sb.WriteString(fmt.Sprintf("  %s %s\n",
 			label("Kubernetes"),
@@ -207,14 +204,14 @@ func (s *SystemInfo) Summary() string {
 	if s.AWS != nil && s.AWS.Available {
 		awsLine := fmt.Sprintf("  %s account=%s  region=%s",
 			label("AWS"),
-			colorValue.Sprint(s.AWS.AccountID),
-			colorValue.Sprint(s.AWS.Region))
+			s.AWS.AccountID,
+			s.AWS.Region)
 		if len(s.AWS.Services) > 0 {
 			parts := make([]string, len(s.AWS.Services))
 			for i, svc := range s.AWS.Services {
-				parts[i] = colorValue.Sprintf("%s (%d)", svc.Name, svc.Count)
+				parts[i] = fmt.Sprintf("%s (%d)", svc.Name, svc.Count)
 			}
-			awsLine += colorValue.Sprint("  services: ") + strings.Join(parts, colorValue.Sprint(", "))
+			awsLine += "  services: " + strings.Join(parts, ", ")
 		}
 		sb.WriteString(awsLine + "\n")
 	} else {
@@ -226,15 +223,15 @@ func (s *SystemInfo) Summary() string {
 	if s.Azure != nil && s.Azure.Available {
 		azureLine := fmt.Sprintf("  %s subscription=%s",
 			label("Azure"),
-			colorValue.Sprint(s.Azure.SubscriptionID))
+			s.Azure.SubscriptionID)
 		if s.Azure.ServicesAuthError {
-			azureLine += colorValue.Sprint("  services: MFA expired, run 'az login'")
+			azureLine += "  services: MFA expired, run 'az login'"
 		} else if len(s.Azure.Services) > 0 {
 			parts := make([]string, len(s.Azure.Services))
 			for i, svc := range s.Azure.Services {
-				parts[i] = colorValue.Sprintf("%s (%d)", svc.Name, svc.Count)
+				parts[i] = fmt.Sprintf("%s (%d)", svc.Name, svc.Count)
 			}
-			azureLine += colorValue.Sprint("  services: ") + strings.Join(parts, colorValue.Sprint(", "))
+			azureLine += "  services: " + strings.Join(parts, ", ")
 		}
 		sb.WriteString(azureLine + "\n")
 	} else {
@@ -248,9 +245,8 @@ func (s *SystemInfo) Summary() string {
 		colorMuted.Sprint("none")))
 
 	if s.OneAgentRunning {
-		sb.WriteString(fmt.Sprintf("  %s %s\n",
-			label("OneAgent"),
-			colorValue.Sprint("running")))
+		sb.WriteString(fmt.Sprintf("  %s running\n",
+			label("OneAgent")))
 	} else if s.Platform == PlatformDarwin {
 		sb.WriteString(fmt.Sprintf("  %s %s\n",
 			label("OneAgent"),
@@ -262,13 +258,9 @@ func (s *SystemInfo) Summary() string {
 	}
 
 	if len(s.Services) > 0 {
-		parts := make([]string, len(s.Services))
-		for i, svc := range s.Services {
-			parts[i] = colorValue.Sprint(svc)
-		}
 		sb.WriteString(fmt.Sprintf("  %s %s\n",
 			label("Services"),
-			strings.Join(parts, colorValue.Sprint(", "))))
+			strings.Join(s.Services, ", ")))
 	} else {
 		sb.WriteString(fmt.Sprintf("  %s %s\n",
 			label("Services"),
