@@ -130,7 +130,7 @@ func killCollectorProcesses(procs []otelProcessInfo) string {
 // and removes the installation directories created by dtingest.
 func UninstallOtelCollector(dryRun bool) error {
 	header := color.New(color.FgCyan, color.Bold)
-	muted := color.New(color.FgHiBlack)
+	muted := color.New()
 	red := color.New(color.FgRed)
 	bold := color.New(color.FgWhite, color.Bold)
 

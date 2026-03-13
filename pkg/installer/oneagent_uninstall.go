@@ -34,7 +34,7 @@ func uninstallOneAgentLinux(dryRun bool) error {
 	}
 
 	header := color.New(color.FgCyan, color.Bold)
-	muted := color.New(color.FgHiBlack)
+	muted := color.New()
 
 	header.Println("  OneAgent Uninstall (Linux)")
 	muted.Println("  " + "────────────────────────────────────────")
@@ -78,7 +78,7 @@ func uninstallOneAgentLinux(dryRun bool) error {
 
 func uninstallOneAgentWindows(dryRun bool) error {
 	header := color.New(color.FgCyan, color.Bold)
-	muted := color.New(color.FgHiBlack)
+	muted := color.New()
 
 	header.Println("  OneAgent Uninstall (Windows)")
 	muted.Println("  " + "────────────────────────────────────────")

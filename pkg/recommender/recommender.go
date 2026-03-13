@@ -162,7 +162,7 @@ var (
 	recTitleDone   = color.New(color.FgGreen, color.Bold)
 	recTitleActive = color.New(color.FgWhite, color.Bold)
 	recTitleWarn   = color.New(color.FgYellow, color.Bold)
-	recMuted       = color.New(color.FgHiBlack)
+	recMuted       = color.New()
 	recBadgeDone   = color.New(color.FgGreen, color.Bold)
 	recBadgeNum    = color.New(color.FgCyan, color.Bold)
 	recBadgeWarn   = color.New(color.FgYellow, color.Bold)

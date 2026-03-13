@@ -128,7 +128,7 @@ func diffLines(oldLines, newLines []string) []diffEdit {
 func showConfigDiff(origData, updatedData []byte) {
 	green := color.New(color.FgGreen, color.Bold)
 	red := color.New(color.FgRed)
-	dim := color.New(color.FgHiBlack)
+	dim := color.New()
 
 	oldLines := strings.Split(strings.TrimRight(string(origData), "\n"), "\n")
 	newLines := strings.Split(strings.TrimRight(string(updatedData), "\n"), "\n")
@@ -281,7 +281,7 @@ func UpdateOtelConfig(configPath, envURL, token, platformToken string, dryRun bo
 	}
 
 	header := color.New(color.FgCyan, color.Bold)
-	muted := color.New(color.FgHiBlack)
+	muted := color.New()
 	bold := color.New(color.FgWhite, color.Bold)
 	green := color.New(color.FgGreen, color.Bold)
 

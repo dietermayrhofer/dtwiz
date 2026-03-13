@@ -25,7 +25,7 @@ var setupCmd = &cobra.Command{
   4. Runs the selected installer`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		setupHeader := color.New(color.FgCyan, color.Bold)
-		setupMuted := color.New(color.FgHiBlack)
+		setupMuted := color.New()
 		setupPrompt := color.New(color.FgCyan)
 		setupBadge := color.New(color.FgCyan, color.Bold)
 		setupTitle := color.New(color.FgWhite, color.Bold)
