@@ -160,9 +160,5 @@ case ":${PATH}:" in
         # Export PATH into the current shell. This takes effect immediately when
         # the script is sourced (source <(curl ...)); it is a no-op in a subshell.
         export PATH="${INSTALL_DIR}:$PATH"
-        echo ""
-        echo "  dtingest is now available in this terminal."
-        echo "  (If you used 'curl | sh' instead of 'source <(...)', open a new terminal or run:)"
-        echo "    export PATH=\"${INSTALL_DIR}:\$PATH\""
         ;;
 esac
