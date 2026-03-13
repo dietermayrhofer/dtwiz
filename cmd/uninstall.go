@@ -46,6 +46,18 @@ var uninstallOtelCmd = &cobra.Command{
 	},
 }
 
+var uninstallSelfCmd = &cobra.Command{
+	Use:   "self",
+	Short: "Remove the dtingest binary and its PATH entry",
+	Long: `Remove the dtingest binary and the PATH entry added by the install script.
+
+On Linux/macOS the binary is deleted and the shell profile is updated.
+On Windows, ready-to-paste PowerShell commands are printed instead.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return installer.UninstallSelf()
+	},
+}
+
 func init() {
 	uninstallOneAgentCmd.Flags().Bool("dry-run", false, "Show what would be done without making changes")
 	uninstallAWSCmd.Flags().Bool("dry-run", false, "Show what would be done without making changes")
@@ -54,4 +66,5 @@ func init() {
 	uninstallCmd.AddCommand(uninstallOneAgentCmd)
 	uninstallCmd.AddCommand(uninstallAWSCmd)
 	uninstallCmd.AddCommand(uninstallOtelCmd)
+	uninstallCmd.AddCommand(uninstallSelfCmd)
 }
