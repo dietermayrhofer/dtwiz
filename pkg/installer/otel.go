@@ -452,11 +452,8 @@ func toAppsURL(envURL string) string {
 // to show records containing searchTerm.
 func buildOtelLogsUIURL(envURL, searchTerm string) string {
 	base := strings.TrimRight(toAppsURL(envURL), "/")
-	fragmentJSON := fmt.Sprintf(
-		`{"version":2,"dt.timeframe":{"from":"now()-30m","to":"now()"},"tableConfig":{"columns":["timestamp","status","Log message"],"columnAttributes":{"tableLineWrap":true}},"analysisMode":"logs","showDqlEditor":false,"filterFieldQuery":"content = *%s*"}`,
-		searchTerm,
-	)
-	encoded := strings.ReplaceAll(url.QueryEscape(fragmentJSON), "+", "%20")
+	fragment := fmt.Sprintf(`{"filterFieldQuery":"content = *%s*"}`, searchTerm)
+	encoded := strings.ReplaceAll(url.QueryEscape(fragment), "+", "%20")
 	return base + "/ui/apps/dynatrace.logs/#" + encoded
 }
 
