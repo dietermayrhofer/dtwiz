@@ -60,32 +60,32 @@ func parseIntFirst(out string) int {
 var awsProbes = []awsServiceProbe{
 	{
 		name: "EC2",
-		cmd:  []string{"aws", "ec2", "describe-instances", "--filters", "Name=instance-state-name,Values=running", "--query", "length(Reservations[].Instances[])", "--output", "text"},
+		cmd:  []string{"aws", "ec2", "describe-instances", "--filters", "Name=instance-state-name,Values=running", "--query", "length(Reservations[].Instances[])", "--output", "text", "--cli-read-timeout", "20"},
 		countFn: parseIntFirst,
 	},
 	{
 		name: "EKS",
-		cmd:  []string{"aws", "eks", "list-clusters", "--query", "length(clusters)", "--output", "text"},
+		cmd:  []string{"aws", "eks", "list-clusters", "--query", "length(clusters)", "--output", "text", "--cli-read-timeout", "20"},
 		countFn: parseIntFirst,
 	},
 	{
 		name: "ECS",
-		cmd:  []string{"aws", "ecs", "list-clusters", "--query", "length(clusterArns)", "--output", "text"},
+		cmd:  []string{"aws", "ecs", "list-clusters", "--query", "length(clusterArns)", "--output", "text", "--cli-read-timeout", "20"},
 		countFn: parseIntFirst,
 	},
 	{
 		name: "Lambda",
-		cmd:  []string{"aws", "lambda", "list-functions", "--query", "length(Functions)", "--output", "text"},
+		cmd:  []string{"aws", "lambda", "list-functions", "--query", "length(Functions)", "--output", "text", "--cli-read-timeout", "20"},
 		countFn: parseIntFirst,
 	},
 	{
 		name: "RDS",
-		cmd:  []string{"aws", "rds", "describe-db-instances", "--query", "length(DBInstances)", "--output", "text"},
+		cmd:  []string{"aws", "rds", "describe-db-instances", "--query", "length(DBInstances)", "--output", "text", "--cli-read-timeout", "20"},
 		countFn: parseIntFirst,
 	},
 	{
 		name: "S3",
-		cmd:  []string{"aws", "s3api", "list-buckets", "--query", "length(Buckets)", "--output", "text"},
+		cmd:  []string{"aws", "s3api", "list-buckets", "--query", "length(Buckets)", "--output", "text", "--cli-read-timeout", "20"},
 		countFn: parseIntFirst,
 	},
 }

@@ -29,7 +29,7 @@ func runCmd(cmd string, args ...string) (bool, string) {
 	select {
 	case err := <-done:
 		return err == nil, strings.TrimSpace(buf.String())
-	case <-time.After(10 * time.Second):
+	case <-time.After(20 * time.Second):
 		if c.Process != nil {
 			_ = c.Process.Kill()
 		}
