@@ -158,13 +158,13 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 }
 
 var (
-	recHeader      = color.New(color.FgCyan, color.Bold)
+	recHeader      = color.New(color.FgMagenta, color.Bold)
 	recTitleDone   = color.New(color.FgGreen, color.Bold)
 	recTitleActive = color.New()
 	recTitleWarn   = color.New(color.FgYellow, color.Bold)
 	recMuted       = color.New()
 	recBadgeDone   = color.New(color.FgGreen, color.Bold)
-	recBadgeNum    = color.New(color.FgCyan, color.Bold)
+	recBadgeNum    = color.New(color.FgMagenta, color.Bold)
 	recBadgeWarn   = color.New(color.FgYellow, color.Bold)
 )
 

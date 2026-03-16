@@ -13,7 +13,7 @@ var (
 	statusError = color.New(color.FgRed, color.Bold)
 	statusLabel = color.New()
 	statusMuted = color.New()
-	statusHead  = color.New(color.FgCyan, color.Bold)
+	statusHead  = color.New(color.FgMagenta, color.Bold)
 )
 
 var statusCmd = &cobra.Command{

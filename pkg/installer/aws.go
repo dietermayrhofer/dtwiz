@@ -408,7 +408,7 @@ func buildDeployArgs(cfg awsStackConfig, templateFile string) []string {
 //   - platformToken:  dt0s16.* token from --platform-token / DT_PLATFORM_TOKEN (used as default for prompts)
 //   - dryRun:         when true, show what would be done without executing
 func InstallAWS(envURL, token, platformToken string, dryRun bool) error {
-	cyan := color.New(color.FgCyan)
+	cyan := color.New(color.FgMagenta)
 	sep := strings.Repeat("─", 60)
 
 	// Prefer the explicit platform token; fall back to the dtctl token.

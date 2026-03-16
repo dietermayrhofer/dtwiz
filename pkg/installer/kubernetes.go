@@ -371,7 +371,7 @@ func InstallKubernetes(envURL, token, apiToken, name string, dryRun bool) error 
 	for _, line := range strings.Split(strings.TrimRight(manifest, "\n"), "\n") {
 		fmt.Printf("    %s\n", line)
 	}
-	cyan := color.New(color.FgCyan)
+	cyan := color.New(color.FgMagenta)
 	fmt.Printf("\n  %s\n", sep)
 	cyan.Printf("  Commands to be executed:\n")
 	fmt.Printf("  %s\n", sep)

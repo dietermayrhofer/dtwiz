@@ -128,7 +128,7 @@ type SystemInfo struct {
 }
 
 var (
-	colorHeader = color.New(color.FgCyan, color.Bold)
+	colorHeader = color.New(color.FgMagenta, color.Bold)
 	colorMuted  = color.New()
 )
 

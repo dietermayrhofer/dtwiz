@@ -129,7 +129,7 @@ func killCollectorProcesses(procs []otelProcessInfo) string {
 // UninstallOtelCollector kills all running Dynatrace OTel Collector processes
 // and removes the installation directories created by dtingest.
 func UninstallOtelCollector(dryRun bool) error {
-	header := color.New(color.FgCyan, color.Bold)
+	header := color.New(color.FgMagenta, color.Bold)
 	muted := color.New()
 	red := color.New(color.FgRed)
 

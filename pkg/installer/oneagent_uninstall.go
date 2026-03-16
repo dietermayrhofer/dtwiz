@@ -33,7 +33,7 @@ func uninstallOneAgentLinux(dryRun bool) error {
 		return fmt.Errorf("OneAgent uninstall script not found at %s — is OneAgent installed?", linuxUninstallScript)
 	}
 
-	header := color.New(color.FgCyan, color.Bold)
+	header := color.New(color.FgMagenta, color.Bold)
 	muted := color.New()
 
 	header.Println("  OneAgent Uninstall (Linux)")
@@ -77,7 +77,7 @@ func uninstallOneAgentLinux(dryRun bool) error {
 }
 
 func uninstallOneAgentWindows(dryRun bool) error {
-	header := color.New(color.FgCyan, color.Bold)
+	header := color.New(color.FgMagenta, color.Bold)
 	muted := color.New()
 
 	header.Println("  OneAgent Uninstall (Windows)")

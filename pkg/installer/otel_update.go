@@ -280,7 +280,7 @@ func UpdateOtelConfig(configPath, envURL, token, platformToken string, dryRun bo
 		return fmt.Errorf("serialising preview: %w", err)
 	}
 
-	header := color.New(color.FgCyan, color.Bold)
+	header := color.New(color.FgMagenta, color.Bold)
 	muted := color.New()
 	bold := color.New(color.FgWhite, color.Bold)
 	green := color.New(color.FgGreen, color.Bold)

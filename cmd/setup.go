@@ -24,10 +24,10 @@ var setupCmd = &cobra.Command{
   3. Prompts you to pick a method
   4. Runs the selected installer`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		setupHeader := color.New(color.FgCyan, color.Bold)
+		setupHeader := color.New(color.FgMagenta, color.Bold)
 		setupMuted := color.New()
-		setupPrompt := color.New(color.FgCyan)
-		setupBadge := color.New(color.FgCyan, color.Bold)
+		setupPrompt := color.New(color.FgMagenta)
+		setupBadge := color.New(color.FgMagenta, color.Bold)
 
 		setupHeader.Println("  Analyzing system...")
 		setupMuted.Println("  " + strings.Repeat("─", 42))

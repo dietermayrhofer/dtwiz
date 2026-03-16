@@ -39,7 +39,7 @@ func deleteDTMonitoringConfig(apiURL, token, objectID string) error {
 //   - token:   access token for Dynatrace API (falls back to DT_ACCESS_TOKEN env var)
 //   - dryRun:  when true, show what would be done without executing
 func UninstallAWS(envURL, token string, dryRun bool) error {
-	cyan := color.New(color.FgCyan)
+	cyan := color.New(color.FgMagenta)
 
 	if !isAWSCLIInstalled() {
 		return fmt.Errorf("AWS CLI not found — install it from https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html")

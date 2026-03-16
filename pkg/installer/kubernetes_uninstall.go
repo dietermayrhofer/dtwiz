@@ -13,7 +13,7 @@ import (
 //  3. Helm uninstall dynatrace-operator
 //  4. Delete the dynatrace namespace
 func UninstallKubernetes() error {
-	cyan := color.New(color.FgCyan)
+	cyan := color.New(color.FgMagenta)
 
 	fmt.Println()
 	cyan.Println("  Dynatrace Kubernetes Uninstall")
