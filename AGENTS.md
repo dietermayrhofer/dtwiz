@@ -62,8 +62,7 @@ Two URL families — getting this wrong causes 404s or auth errors:
 | Token prefix | Type | Usage |
 |---|---|---|
 | `dt0c01.*` | API token | Classic API (`Api-Token` header) |
-| `dt0s16.*` | Settings token | Settings/extensions config |
-| OAuth | Platform token | Platform APIs, DQL |
+| `dt0s16.*` | Platform token | New API |
 
 `AuthHeader()`: `dt0c01.*` → `Api-Token <token>`, everything else → `Bearer <token>`.
 
@@ -72,6 +71,12 @@ Credentials resolved from: `--environment`/`--access-token`/`--platform-token` f
 ## Key design rules
 
 - **Zero-config defaults:** OneAgent full-stack mode, K8s `cloudNativeFullStack`, AWS all services + all regions.
+
+## CLI conventions
+
+- **Args validation:** All leaf commands must set `Args: cobra.NoArgs`. Parent commands with required subcommands use `Args: cobra.MinimumNArgs(1)`.
+- **`--dry-run` pattern:** Defined once as a `PersistentFlags().BoolVar()` on the parent command (`installCmd`, `updateCmd`, `uninstallCmd`), shared by all subcommands via a package-level variable.
+- **Verb-noun command tree:** Top-level verbs are `install`, `update`, `uninstall`. Methods are subcommands (`dtwiz install otel`, `dtwiz update otel`). New operations get their own verb — don't nest verbs under `install`.
 
 ## Build & release
 
