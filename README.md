@@ -73,6 +73,11 @@ make install
 | `dtwiz install aws` | Set up Dynatrace AWS CloudFormation integration |
 | `dtwiz install azure` | Set up Dynatrace Azure Monitor integration *(coming soon)* |
 | `dtwiz install gcp` | Set up Dynatrace Google Cloud Platform integration *(coming soon)* |
+| `dtwiz uninstall oneagent` | Uninstall Dynatrace OneAgent from this host |
+| `dtwiz uninstall kubernetes` | Remove Dynatrace Operator and DynaKube resources from Kubernetes |
+| `dtwiz uninstall otel` | Kill running OTel Collector processes and remove installation files |
+| `dtwiz uninstall aws` | Remove the Dynatrace AWS CloudFormation stack and monitoring configuration |
+| `dtwiz uninstall self` | Remove the dtwiz binary and its PATH entry |
 | `dtwiz status` | Show Dynatrace connection status and system state |
 
 ## Example workflow
