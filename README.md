@@ -2,34 +2,60 @@
 
 **Dynatrace Ingest CLI** — analyzes your system and deploys the best Dynatrace observability method.
 
-`dtwiz` is a Go CLI that ports the Python `ingest-agent` to Go. It reuses **dtctl's entire authentication stack** (config loading, multi-context support, OAuth PKCE token refresh, OS keyring, and API token fallback) by importing `github.com/dynatrace-oss/dtctl` as a module dependency.
+`dtwiz` is a Go CLI that analyzes your system and deploys the best Dynatrace observability method automatically.
 
-## Prerequisites
+## Quickstart
 
-Configure your Dynatrace environment with [dtctl](https://github.com/dynatrace-oss/dtctl):
+Run the following commands in your terminal/console to install and launch `dtwiz`:
 
-```bash
-# Option 1 – OAuth login (recommended)
-dtctl auth login
-
-# Option 2 – API token
-dtctl config set-context my-env \
-  --environment https://abc12345.apps.dynatrace.com \
-  --token dt0c01.XXXX...
-```
-
-## Installation
+### Linux / macOS
 
 ```bash
+export DT_ENVIRONMENT="https://<your-tenant-domain>"
+export DT_ACCESS_TOKEN="dt0c01.XXXX..."
+export DT_PLATFORM_TOKEN="dt0s16.XXXX..."
 source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_linux_mac.sh)
+dtwiz setup
 ```
 
 > Requires bash or zsh. Using `source <(...)` makes `dtwiz` available in your current terminal immediately — no need to open a new one.
 
+### Windows (PowerShell)
+
+```powershell
+$env:DT_ENVIRONMENT="https://<your-tenant-domain>"
+$env:DT_ACCESS_TOKEN="dt0c01.XXXX..."
+$env:DT_PLATFORM_TOKEN="dt0s16.XXXX..."
+irm https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_windows.ps1 | iex
+dtwiz setup
+```
+
+## Prerequisites
+
+Set the following environment variables before running `dtwiz`:
+
+| Variable | Description |
+|----------|-------------|
+| `DT_ENVIRONMENT` | Your Dynatrace environment URL (e.g. `https://<your-tenant-domain>`) |
+| `DT_ACCESS_TOKEN` | Classic API token (`dt0c01.*`) — used for OneAgent installer download, OTel ingest, etc. |
+| `DT_PLATFORM_TOKEN` | Platform token (`dt0s16.*`) — used for AWS integration and DQL log verification |
+
+## Installation
+
+**Linux / macOS:**
 ```bash
-# From source
-git clone https://github.com/dietermayrhofer/dt-clis.git
-cd dt-clis/dtwiz
+source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_linux_mac.sh)
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_windows.ps1 | iex
+```
+
+**From source:**
+```bash
+git clone https://github.com/dietermayrhofer/dtwiz.git
+cd dtwiz
 make install
 ```
 
@@ -37,9 +63,9 @@ make install
 
 | Command | Description |
 |---------|-------------|
+| `dtwiz setup` | Interactive analyze → recommend → install workflow |
 | `dtwiz analyze` | Detect platform, containers, K8s, existing agents, cloud, and services |
 | `dtwiz recommend` | Generate ranked ingestion recommendations |
-| `dtwiz setup` | Interactive analyze → recommend → install workflow |
 | `dtwiz install oneagent` | Install Dynatrace OneAgent on this host |
 | `dtwiz install kubernetes` | Deploy Dynatrace Operator on Kubernetes |
 | `dtwiz install docker` | Install OneAgent for Docker |
@@ -52,8 +78,10 @@ Use `--context <name>` on any command to override the active dtctl context.
 ## Example workflow
 
 ```bash
-# 1. Authenticate via dtctl
-dtctl auth login
+# 1. Set credentials
+export DT_ENVIRONMENT="https://<your-tenant-domain>"
+export DT_ACCESS_TOKEN="dt0c01.XXXX..."
+export DT_PLATFORM_TOKEN="dt0s16.XXXX..."
 
 # 2. Analyze the current system
 dtwiz analyze
@@ -106,4 +134,4 @@ dtwiz/
     └── installer/    # Shared utilities + per-method stubs
 ```
 
-Authentication is fully delegated to dtctl — `dtwiz` never stores credentials itself.
+Credentials are read from `DT_ENVIRONMENT`, `DT_ACCESS_TOKEN`, and `DT_PLATFORM_TOKEN` environment variables — `dtwiz` never stores tokens itself.
