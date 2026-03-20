@@ -71,6 +71,8 @@ make install
 | `dtwiz install docker` | Install OneAgent for Docker |
 | `dtwiz install otel` | Install/configure OpenTelemetry Collector |
 | `dtwiz install aws` | Set up Dynatrace AWS CloudFormation integration |
+| `dtwiz install azure` | Set up Dynatrace Azure Monitor integration *(coming soon)* |
+| `dtwiz install gcp` | Set up Dynatrace Google Cloud Platform integration *(coming soon)* |
 | `dtwiz status` | Show Dynatrace connection status and system state |
 
 ## Example workflow
