@@ -67,20 +67,6 @@ var installOtelCmd = &cobra.Command{
 	},
 }
 
-var otelUpdateConfigPath string
-var installOtelUpdateCmd = &cobra.Command{
-	Use:   "otel-update",
-	Short: "Patch an existing OTel Collector config with the Dynatrace exporter",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		envURL, token, err := getDtEnvironment()
-		if err != nil {
-			return err
-		}
-		return installer.UpdateOtelConfig(otelUpdateConfigPath, envURL, token, platformToken(), installDryRun)
-	},
-}
-
 var otelPythonServiceName string
 var installOtelPythonCmd = &cobra.Command{
 	Use:   "otel-python",
@@ -129,7 +115,6 @@ var installGCPCmd = &cobra.Command{
 func init() {
 	installCmd.PersistentFlags().BoolVar(&installDryRun, "dry-run", false, "show what would be done without executing")
 
-	installOtelUpdateCmd.Flags().StringVar(&otelUpdateConfigPath, "config", "config.yaml", "path to the existing OTel Collector config file to patch")
 	installOtelPythonCmd.Flags().StringVar(&otelPythonServiceName, "service-name", "", "OTEL_SERVICE_NAME for the instrumented application (default: my-service)")
 
 	installOneAgentCmd.Flags().Bool("quiet", false, "Run a silent/unattended installation with no output")
@@ -138,7 +123,6 @@ func init() {
 	installCmd.AddCommand(installKubernetesCmd)
 	installCmd.AddCommand(installDockerCmd)
 	installCmd.AddCommand(installOtelCmd)
-	installCmd.AddCommand(installOtelUpdateCmd)
 	installCmd.AddCommand(installOtelPythonCmd)
 	installCmd.AddCommand(installAWSCmd)
 	installCmd.AddCommand(installAzureCmd)

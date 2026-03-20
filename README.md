@@ -78,6 +78,7 @@ make install
 | `dtwiz uninstall otel` | Kill running OTel Collector processes and remove installation files |
 | `dtwiz uninstall aws` | Remove the Dynatrace AWS CloudFormation stack and monitoring configuration |
 | `dtwiz uninstall self` | Remove the dtwiz binary and its PATH entry |
+| `dtwiz update otel` | Patch an existing OTel Collector config with the Dynatrace exporter |
 | `dtwiz status` | Show Dynatrace connection status and system state |
 
 ## Example workflow

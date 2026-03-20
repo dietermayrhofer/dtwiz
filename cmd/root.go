@@ -45,6 +45,7 @@ func init() {
 	rootCmd.AddCommand(recommendCmd)
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(uninstallCmd)
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(versionCmd)

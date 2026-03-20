@@ -72,7 +72,7 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 			),
 			Prerequisites: []string{"Access to OTel Collector configuration"},
 			Steps: []string{
-				"dtwiz install otel-update",
+				"dtwiz update otel",
 			},
 			ConfigPath: system.OtelConfigPath,
 		})
