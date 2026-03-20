@@ -1,4 +1,4 @@
-BINARY := dtingest
+BINARY := dtwiz
 GO     := go
 
 .PHONY: build install test lint clean
@@ -6,7 +6,7 @@ GO     := go
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 
 build:
-	$(GO) build -ldflags "-X github.com/dietermayrhofer/dtingest/cmd.Version=$(VERSION)" -o $(BINARY) .
+	$(GO) build -ldflags "-X github.com/dietermayrhofer/dtwiz/cmd.Version=$(VERSION)" -o $(BINARY) .
 
 install:
 	$(GO) install .

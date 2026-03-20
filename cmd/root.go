@@ -15,9 +15,9 @@ var accessTokenFlag string
 var platformTokenFlag string
 
 var rootCmd = &cobra.Command{
-	Use:   "dtingest",
+	Use:   "dtwiz",
 	Short: "Dynatrace Ingest CLI — analyze systems and deploy observability",
-	Long: `dtingest analyzes your system and deploys the best Dynatrace ingestion method.
+	Long: `dtwiz analyzes your system and deploys the best Dynatrace ingestion method.
 
 Provide your Dynatrace environment URL and access token via flags or
 environment variables:
@@ -25,7 +25,7 @@ environment variables:
   export DT_ENVIRONMENT=https://<your-env>.dynatracelabs.com
   export DT_ACCESS_TOKEN=dt0c01.****
 
-Then use dtingest commands to analyze and instrument your system.`,
+Then use dtwiz commands to analyze and instrument your system.`,
 }
 
 // Execute runs the root command.

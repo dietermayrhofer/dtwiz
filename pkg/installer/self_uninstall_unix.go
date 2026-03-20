@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// UninstallSelf removes the dtingest binary from disk and strips the PATH
+// UninstallSelf removes the dtwiz binary from disk and strips the PATH
 // entry that the install script added to the user's shell profile.
 func UninstallSelf() error {
 	exePath, err := os.Executable()
@@ -30,7 +30,7 @@ func UninstallSelf() error {
 
 	// Show preview and confirm.
 	fmt.Println()
-	fmt.Printf("  This will uninstall dtingest:\n")
+	fmt.Printf("  This will uninstall dtwiz:\n")
 	fmt.Println()
 	fmt.Printf("    Binary  : %s\n", exePath)
 	if profilePath != "" {
@@ -61,7 +61,7 @@ func UninstallSelf() error {
 	}
 	fmt.Printf("  Removed %s\n", exePath)
 	fmt.Println()
-	fmt.Println("  dtingest uninstalled.")
+	fmt.Println("  dtwiz uninstalled.")
 	return nil
 }
 
@@ -88,7 +88,7 @@ func detectShellProfile() string {
 
 // removeInstallerPathBlock removes the two-line block the installer wrote:
 //
-//	# Added by dtingest installer
+//	# Added by dtwiz installer
 //	export PATH="<installDir>:$PATH"
 //
 // If the block is not found the file is left unchanged (not an error).
@@ -107,7 +107,7 @@ func removeInstallerPathBlock(profilePath, installDir string) error {
 	for i < len(lines) {
 		line := lines[i]
 		// Match the comment marker the installer writes.
-		if strings.TrimSpace(line) == "# Added by dtingest installer" {
+		if strings.TrimSpace(line) == "# Added by dtwiz installer" {
 			// Peek at the next non-empty line to confirm it's our export.
 			j := i + 1
 			for j < len(lines) && strings.TrimSpace(lines[j]) == "" {

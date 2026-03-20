@@ -1,9 +1,9 @@
-# install.ps1 — Download and install dtingest on Windows.
+# install.ps1 — Download and install dtwiz on Windows.
 #
 # Usage:
 #   .\install.ps1 [-InstallDir <dir>]
 #
-# By default the binary is installed to $env:LOCALAPPDATA\Programs\dtingest.
+# By default the binary is installed to $env:LOCALAPPDATA\Programs\dtwiz.
 # Pass -InstallDir to override.  The install directory is added permanently
 # to the current user's PATH.
 #
@@ -18,7 +18,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Repo = "dietermayrhofer/dtingest"
+$Repo = "dietermayrhofer/dtwiz"
 
 # ── Detect architecture ────────────────────────────────────────────────────────
 # Try .NET RuntimeInformation first (PowerShell 7+ / .NET 4.7.1+), then fall
@@ -62,18 +62,18 @@ if (-not $RedirectUrl) {
 $Version = ($RedirectUrl -split '/')[-1]
 
 if (-not $Version) {
-    Write-Error "Could not determine the latest dtingest version."
+    Write-Error "Could not determine the latest dtwiz version."
     exit 1
 }
 
 # ── Determine install directory ────────────────────────────────────────────────
 if (-not $InstallDir) {
-    $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\dtingest"
+    $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\dtwiz"
 }
 
 # ── Confirm installation ──────────────────────────────────────────────────────
 Write-Host ""
-Write-Host "This will download and install dtingest ${Version}:"
+Write-Host "This will download and install dtwiz ${Version}:"
 Write-Host "  * Download from github.com/${Repo}"
 Write-Host "  * Install to $InstallDir"
 Write-Host "  * Add $InstallDir to your user PATH (if not already present)"
@@ -86,10 +86,10 @@ if ($Confirm -match '^[Nn]') {
 
 # ── Download and extract ───────────────────────────────────────────────────────
 Write-Host ""
-Write-Host "Downloading dtingest ${Version}..."
+Write-Host "Downloading dtwiz ${Version}..."
 
 $VersionNum = $Version.TrimStart("v")
-$Archive    = "dtingest_${VersionNum}_windows_${Arch}.zip"
+$Archive    = "dtwiz_${VersionNum}_windows_${Arch}.zip"
 $TmpDir     = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
 New-Item -ItemType Directory -Path $TmpDir | Out-Null
 
@@ -101,9 +101,9 @@ try {
 
     Expand-Archive -Path $ArchivePath -DestinationPath $TmpDir -Force
 
-    $ExtractedBinary = Join-Path $TmpDir "dtingest.exe"
+    $ExtractedBinary = Join-Path $TmpDir "dtwiz.exe"
     if (-not (Test-Path $ExtractedBinary)) {
-        Write-Error "dtingest.exe not found after extraction."
+        Write-Error "dtwiz.exe not found after extraction."
         exit 1
     }
 
@@ -112,11 +112,11 @@ try {
     }
 
     # ── Install binary ─────────────────────────────────────────────────────────
-    $Dest = Join-Path $InstallDir "dtingest.exe"
+    $Dest = Join-Path $InstallDir "dtwiz.exe"
     Move-Item -Force $ExtractedBinary $Dest
 
     Write-Host ""
-    Write-Host "dtingest ${Version} installed to ${Dest}"
+    Write-Host "dtwiz ${Version} installed to ${Dest}"
 
     # ── Add to user PATH if needed ─────────────────────────────────────────────
     $UserPath = [Environment]::GetEnvironmentVariable("PATH", "User")

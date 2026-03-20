@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
-# install.sh — Download and install dtingest for the current platform.
+# install.sh — Download and install dtwiz for the current platform.
 #
-# Usage (recommended — makes dtingest available immediately without reopening your terminal):
-#   source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtingest/main/scripts/install_dtingest_linux_mac.sh)
+# Usage (recommended — makes dtwiz available immediately without reopening your terminal):
+#   source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_linux_mac.sh)
 #
 # Alternative (requires opening a new terminal afterwards):
-#   curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtingest/main/scripts/install_dtingest_linux_mac.sh | sh
+#   curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_linux_mac.sh | sh
 #
 # Requires bash or zsh. Pass --install-dir <dir> to override the install location.
 # By default the binary is installed to /usr/local/bin (requires sudo) or
@@ -13,7 +13,7 @@
 #
 # The script requires curl.
 
-REPO="dietermayrhofer/dtingest"
+REPO="dietermayrhofer/dtwiz"
 
 # ── Parse known flags ──────────────────────────────────────────────────────────
 INSTALL_DIR=""
@@ -63,7 +63,7 @@ VERSION="$(curl -fsSL -o /dev/null -w '%{url_effective}' \
     | sed 's|.*/||')"
 
 if [ -z "$VERSION" ]; then
-    echo "Error: could not determine the latest dtingest version." >&2
+    echo "Error: could not determine the latest dtwiz version." >&2
     exit 1
 fi
 
@@ -78,7 +78,7 @@ fi
 
 # ── Confirm installation ───────────────────────────────────────────────────────
 echo ""
-echo "This will download and install dtingest ${VERSION}:"
+echo "This will download and install dtwiz ${VERSION}:"
 echo "  - Download from github.com/${REPO}"
 echo "  - Install to ${INSTALL_DIR}"
 echo "  - Add ${INSTALL_DIR} to your PATH (if not already present)"
@@ -93,9 +93,9 @@ esac
 
 # ── Download and extract ───────────────────────────────────────────────────────
 echo ""
-echo "Downloading dtingest ${VERSION}..."
+echo "Downloading dtwiz ${VERSION}..."
 
-ARCHIVE="dtingest_${VERSION#v}_${OS}_${ARCH}.tar.gz"
+ARCHIVE="dtwiz_${VERSION#v}_${OS}_${ARCH}.tar.gz"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT INT TERM
 
@@ -105,25 +105,25 @@ curl -fsSL \
 
 tar -xzf "${WORK_DIR}/${ARCHIVE}" -C "$WORK_DIR"
 
-if [ ! -f "${WORK_DIR}/dtingest" ]; then
-    echo "Error: dtingest binary not found after extraction." >&2
+if [ ! -f "${WORK_DIR}/dtwiz" ]; then
+    echo "Error: dtwiz binary not found after extraction." >&2
     exit 1
 fi
 
-chmod +x "${WORK_DIR}/dtingest"
+chmod +x "${WORK_DIR}/dtwiz"
 mkdir -p "$INSTALL_DIR"
 
 # ── Install binary ─────────────────────────────────────────────────────────────
-DEST="${INSTALL_DIR}/dtingest"
+DEST="${INSTALL_DIR}/dtwiz"
 if [ -w "$INSTALL_DIR" ]; then
-    mv "${WORK_DIR}/dtingest" "$DEST"
+    mv "${WORK_DIR}/dtwiz" "$DEST"
 else
     echo "Installing to ${INSTALL_DIR} requires elevated privileges..."
-    sudo mv "${WORK_DIR}/dtingest" "$DEST"
+    sudo mv "${WORK_DIR}/dtwiz" "$DEST"
 fi
 
 echo ""
-echo "dtingest ${VERSION} installed to ${DEST}"
+echo "dtwiz ${VERSION} installed to ${DEST}"
 
 # ── Add to PATH in shell profile if needed ─────────────────────────────────────
 case ":${PATH}:" in
@@ -151,7 +151,7 @@ case ":${PATH}:" in
         if [ -n "$PROFILE_FILE" ]; then
             # Only append if the line isn't already present
             if ! grep -qF "${INSTALL_DIR}" "${PROFILE_FILE}" 2>/dev/null; then
-                printf '\n# Added by dtingest installer\n%s\n' "$EXPORT_LINE" >> "$PROFILE_FILE"
+                printf '\n# Added by dtwiz installer\n%s\n' "$EXPORT_LINE" >> "$PROFILE_FILE"
                 echo ""
                 echo "  Added ${INSTALL_DIR} to PATH in ${PROFILE_FILE}"
             fi

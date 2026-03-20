@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dietermayrhofer/dtingest/pkg/analyzer"
+	"github.com/dietermayrhofer/dtwiz/pkg/analyzer"
 	"github.com/fatih/color"
 )
 
@@ -72,7 +72,7 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 			),
 			Prerequisites: []string{"Access to OTel Collector configuration"},
 			Steps: []string{
-				"dtingest install otel-update",
+				"dtwiz install otel-update",
 			},
 			ConfigPath: system.OtelConfigPath,
 		})
@@ -87,7 +87,7 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 			Description: "Deploy the Dynatrace OpenTelemetry Collector to ingest traces, metrics, and logs via OTLP.",
 			Prerequisites: []string{"Dynatrace API token with ingest scopes"},
 			Steps: []string{
-				"dtingest install otel-collector",
+				"dtwiz install otel-collector",
 			},
 		})
 	}
@@ -104,7 +104,7 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 			),
 			Prerequisites: []string{"kubectl access to the cluster", "Dynatrace API token with required scopes"},
 			Steps: []string{
-				"dtingest install kubernetes",
+				"dtwiz install kubernetes",
 			},
 		})
 	}
@@ -119,7 +119,7 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 			Description: "Docker is running without Kubernetes orchestration. Deploy OneAgent as a container for host + container monitoring.",
 			Prerequisites: []string{"Docker daemon access", "Dynatrace API token"},
 			Steps: []string{
-				"dtingest install docker",
+				"dtwiz install docker",
 			},
 		})
 	}
@@ -135,7 +135,7 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 			Description: "No container runtime detected. Install OneAgent directly for full-stack host monitoring.",
 			Prerequisites: []string{"Root/Administrator privileges", "Dynatrace API token"},
 			Steps: []string{
-				"dtingest install oneagent",
+				"dtwiz install oneagent",
 			},
 		})
 	}
@@ -149,7 +149,7 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 			Description: fmt.Sprintf("AWS credentials detected (account: %s). Deploy the Dynatrace ActiveGate via CloudFormation for cloud-level monitoring.", system.AWS.AccountID),
 			Prerequisites: []string{"AWS CLI with sufficient permissions", "Dynatrace API token"},
 			Steps: []string{
-				"dtingest install aws",
+				"dtwiz install aws",
 			},
 		})
 	}
@@ -190,7 +190,7 @@ func FormatRecommendations(recs []Recommendation) string {
 		} else {
 			badge := recBadgeNum.Sprintf(" %d ", i+1)
 			title := recTitleActive.Sprint(r.Title)
-			install := recMuted.Sprintf("dtingest install %s", r.Method)
+			install := recMuted.Sprintf("dtwiz install %s", r.Method)
 			sb.WriteString(fmt.Sprintf("  %s  %s  →  %s\n", badge, title, install))
 		}
 	}

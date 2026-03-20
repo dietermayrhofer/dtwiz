@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dietermayrhofer/dtingest/pkg/installer"
+	"github.com/dietermayrhofer/dtwiz/pkg/installer"
 )
 
 // environmentHint returns the Dynatrace environment URL from the --environment

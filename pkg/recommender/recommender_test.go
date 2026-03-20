@@ -3,8 +3,8 @@ package recommender_test
 import (
 	"testing"
 
-	"github.com/dietermayrhofer/dtingest/pkg/analyzer"
-	"github.com/dietermayrhofer/dtingest/pkg/recommender"
+	"github.com/dietermayrhofer/dtwiz/pkg/analyzer"
+	"github.com/dietermayrhofer/dtwiz/pkg/recommender"
 )
 
 func TestGenerateRecommendations_OneAgentAlreadyRunning(t *testing.T) {

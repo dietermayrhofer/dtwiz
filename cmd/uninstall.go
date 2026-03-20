@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/dietermayrhofer/dtingest/pkg/installer"
+	"github.com/dietermayrhofer/dtwiz/pkg/installer"
 	"github.com/spf13/cobra"
 )
 
@@ -48,8 +48,8 @@ var uninstallOtelCmd = &cobra.Command{
 
 var uninstallSelfCmd = &cobra.Command{
 	Use:   "self",
-	Short: "Remove the dtingest binary and its PATH entry",
-	Long: `Remove the dtingest binary and the PATH entry added by the install script.
+	Short: "Remove the dtwiz binary and its PATH entry",
+	Long: `Remove the dtwiz binary and the PATH entry added by the install script.
 
 On Linux/macOS the binary is deleted and the shell profile is updated.
 On Windows, ready-to-paste PowerShell commands are printed instead.`,

@@ -303,7 +303,7 @@ func sendOtelVerificationLog(body string) error {
 			{
 				"resource": map[string]interface{}{
 					"attributes": []map[string]interface{}{
-						{"key": "service.name", "value": map[string]string{"stringValue": "dtingest"}},
+						{"key": "service.name", "value": map[string]string{"stringValue": "dtwiz"}},
 						{"key": "host.name", "value": map[string]string{"stringValue": hostname}},
 						{"key": "os.type", "value": map[string]string{"stringValue": runtime.GOOS}},
 						{"key": "host.arch", "value": map[string]string{"stringValue": runtime.GOARCH}},
@@ -311,7 +311,7 @@ func sendOtelVerificationLog(body string) error {
 				},
 				"scopeLogs": []map[string]interface{}{
 					{
-						"scope": map[string]string{"name": "dtingest.installer"},
+						"scope": map[string]string{"name": "dtwiz.installer"},
 						"logRecords": []map[string]interface{}{
 							{
 								"timeUnixNano": fmt.Sprintf("%d", time.Now().UnixNano()),
@@ -319,7 +319,7 @@ func sendOtelVerificationLog(body string) error {
 								"severityNumber": 9,
 								"body":            map[string]string{"stringValue": body},
 								"attributes": []map[string]interface{}{
-									{"key": "dtingest.version", "value": map[string]string{"stringValue": "1.0"}},
+									{"key": "dtwiz.version", "value": map[string]string{"stringValue": "1.0"}},
 								},
 							},
 						},
@@ -501,10 +501,10 @@ func verifyOtelInstall(envURL, platformToken, apiToken string, crashed <-chan er
 
 	hostname, _ := os.Hostname()
 	// Unique search token: hostname + unix seconds — short and searchable.
-	uniqueID := fmt.Sprintf("dtingest-%s-%d", strings.ReplaceAll(hostname, ".", "-"), time.Now().Unix())
+	uniqueID := fmt.Sprintf("dtwiz-%s-%d", strings.ReplaceAll(hostname, ".", "-"), time.Now().Unix())
 
 	body := fmt.Sprintf(
-		"OpenTelemetry Collector Successfully installed with dtingest [host: %s, os: %s/%s, id: %s]",
+		"OpenTelemetry Collector Successfully installed with dtwiz [host: %s, os: %s/%s, id: %s]",
 		hostname, runtime.GOOS, runtime.GOARCH, uniqueID,
 	)
 

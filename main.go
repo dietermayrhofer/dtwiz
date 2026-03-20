@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/dietermayrhofer/dtingest/cmd"
+	"github.com/dietermayrhofer/dtwiz/cmd"
 )
 
 func main() {

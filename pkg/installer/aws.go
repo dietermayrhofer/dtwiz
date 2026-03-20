@@ -251,7 +251,7 @@ func findExistingMonitoringConfig(apiURL, token, accountID string) string {
 // Dynatrace (mirroring the Python create_monitoring_config logic) and returns
 // the objectId (UUID) to use as pMonitoringConfigId in CloudFormation.
 func createDTMonitoringConfig(apiURL, token, accountID, region string) (string, error) {
-	desc := fmt.Sprintf("dtingest — account %s / %s", accountID, region)
+	desc := fmt.Sprintf("dtwiz — account %s / %s", accountID, region)
 	payload := []map[string]interface{}{
 		{
 			"scope": "integration-aws",

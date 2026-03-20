@@ -1,16 +1,16 @@
-# dtingest — Agent Context
+# dtwiz — Agent Context
 
 ## Goal
 
-`dtingest` is a CLI tool that makes it effortless to get Dynatrace observability deployed on any system. The core idea: a user should be able to run a single command, and the tool figures out what the best Dynatrace ingestion method is for their environment, then installs it.
+`dtwiz` is a CLI tool that makes it effortless to get Dynatrace observability deployed on any system. The core idea: a user should be able to run a single command, and the tool figures out what the best Dynatrace ingestion method is for their environment, then installs it.
 
 ## What we want to achieve
 
 - **Zero guesswork for the user.** The tool analyzes the system (OS, container runtime, Kubernetes, cloud provider, existing agents) and recommends the right approach — whether that's the Dynatrace Operator on Kubernetes, OneAgent on a bare-metal host, a Docker-based agent, or an OpenTelemetry Collector.
 
-- **A guided, interactive experience.** `dtingest setup` runs the full flow: analyze → recommend → pick → install. The user doesn't need to know which ingestion method to choose; the tool drives the decision.
+- **A guided, interactive experience.** `dtwiz setup` runs the full flow: analyze → recommend → pick → install. The user doesn't need to know which ingestion method to choose; the tool drives the decision.
 
-- **Reuse dtctl for auth.** Authentication is fully delegated to `dtctl`. The user configures their Dynatrace environment once with `dtctl auth login` or `dtctl config set-context`, and `dtingest` picks it up automatically. No duplicated auth logic.
+- **Reuse dtctl for auth.** Authentication is fully delegated to `dtctl`. The user configures their Dynatrace environment once with `dtctl auth login` or `dtctl config set-context`, and `dtwiz` picks it up automatically. No duplicated auth logic.
 
 - **Clear, minimal output.** The CLI is opinionated about not overwhelming the user with information. The system analysis shows what was detected, recommendations are concise and actionable, and the installer guides the remaining steps.
 
@@ -28,7 +28,7 @@
 
 ## Prefer dtctl over direct Dynatrace API calls
 
-Whenever `dtingest` needs to query or interact with the Dynatrace platform, **prefer shelling out to `dtctl` over making direct HTTP calls**.
+Whenever `dtwiz` needs to query or interact with the Dynatrace platform, **prefer shelling out to `dtctl` over making direct HTTP calls**.
 
 ### Why
 
@@ -47,7 +47,7 @@ Logs ingested via the OTel Collector land in **Grail** storage, not the Classic 
 2. Posting to `/platform/storage/query/v1/query:execute` with a JSON body
 3. A token with `storage:logs:read` scope — which the default OAuth flow does **not** grant
 
-Instead, `dtingest` shells out to `dtctl query`:
+Instead, `dtwiz` shells out to `dtctl query`:
 
 ```go
 out, err := exec.Command("dtctl", "query", "--plain", dqlQuery).Output()
@@ -62,7 +62,7 @@ if err == nil && strings.Contains(string(out), searchTerm) {
 dtctl auth login --context myenv-apps --environment https://myenv.apps.dynatracelabs.com
 ```
 
-and everything works without `dtingest` needing to know about tokens or URL variants.
+and everything works without `dtwiz` needing to know about tokens or URL variants.
 
 ### Rule of thumb
 
@@ -106,11 +106,11 @@ Hosts: DQL / Grail queries, Platform APIs, AppEngine & app functions, Platform O
 
 Dynatrace is mid-transition from an environment-centric model (`/api/v1`, `/api/v2`, API tokens) to a platform-centric model (`/platform/...`, OAuth). Both stacks run in parallel so existing integrations don't break.
 
-### How dtingest handles this
+### How dtwiz handles this
 
 - **`APIURL()` / `ClassicAPIURL()`** — strip `.apps.` to produce the classic API base URL (used for OneAgent download, `/api/v2` calls).
 - **`toAppsURL()`** — insert `.apps.` to produce the platform URL (used for Logs UI deep-links, DQL queries).
-- **`dtctl` shell-outs** — `dtctl query` auto-selects the correct URL family based on the active context, so dtingest doesn't need to pick.
+- **`dtctl` shell-outs** — `dtctl query` auto-selects the correct URL family based on the active context, so dtwiz doesn't need to pick.
 
 > **If an endpoint returns 404 or auth errors, the URL family is usually the problem — not the token.**
 
@@ -126,28 +126,28 @@ git push origin v0.x.y
 GITHUB_TOKEN=$(gh auth token) goreleaser release --clean
 ```
 
-### Asset naming convention (dtingest)
+### Asset naming convention (dtwiz)
 
 Archives follow GoReleaser's default template:
 
 ```
-dtingest_{version}_{os}_{arch}.tar.gz   # Linux / macOS
-dtingest_{version}_{os}_{arch}.zip      # Windows
+dtwiz_{version}_{os}_{arch}.tar.gz   # Linux / macOS
+dtwiz_{version}_{os}_{arch}.zip      # Windows
 ```
 
-Examples: `dtingest_0.1.3_darwin_arm64.tar.gz`, `dtingest_0.1.3_linux_amd64.tar.gz`.
+Examples: `dtwiz_0.1.3_darwin_arm64.tar.gz`, `dtwiz_0.1.3_linux_amd64.tar.gz`.
 
 The install script (`scripts/install.sh`) constructs this name at runtime and downloads the matching asset from the GitHub release.
 
 ### Pitfall: tag exists but release has no assets
 
-`git push --tags` (or the GitHub UI "draft release" flow) can create a lightweight GitHub release with an empty assets list. In that state `dtingest install otel-collector` — and the install script itself — will fail with 404 because there are no binaries to download.
+`git push --tags` (or the GitHub UI "draft release" flow) can create a lightweight GitHub release with an empty assets list. In that state `dtwiz install otel-collector` — and the install script itself — will fail with 404 because there are no binaries to download.
 
 **Fix:** run `goreleaser release --clean` against the existing tag. GoReleaser detects the already-created release and uploads the missing archives.
 
 ## Dynatrace ingestion methods — full landscape
 
-The Dynatrace documentation at `docs.dynatrace.com/docs/ingest-from` organizes all ingestion methods into distinct categories. `dtingest` should understand this full landscape and enable as many as applicable **by default** — the zero-config philosophy means turning on all relevant defaults automatically, not asking the user to pick.
+The Dynatrace documentation at `docs.dynatrace.com/docs/ingest-from` organizes all ingestion methods into distinct categories. `dtwiz` should understand this full landscape and enable as many as applicable **by default** — the zero-config philosophy means turning on all relevant defaults automatically, not asking the user to pick.
 
 ### Ingestion method categories
 
@@ -155,11 +155,11 @@ The Dynatrace documentation at `docs.dynatrace.com/docs/ingest-from` organizes a
 
 OneAgent is Dynatrace's primary data collection agent. A single OneAgent per host collects **all** monitoring data — infrastructure metrics, process monitoring, distributed traces, log ingestion, code-level profiling, and real user monitoring (RUM) injection. OneAgent auto-discovers processes and activates technology-specific instrumentation automatically (Java, .NET, Node.js, Go, PHP, Python, etc.).
 
-| Deployment target | How dtingest handles it |
+| Deployment target | How dtwiz handles it |
 |---|---|
-| **Bare-metal Linux/Windows** | `dtingest install oneagent` — downloads and runs the installer |
-| **Docker hosts** | `dtingest install docker` — runs `dynatrace/oneagent` as a privileged container |
-| **Kubernetes** | `dtingest install kubernetes` — deploys the Dynatrace Operator + DynaKube CR |
+| **Bare-metal Linux/Windows** | `dtwiz install oneagent` — downloads and runs the installer |
+| **Docker hosts** | `dtwiz install docker` — runs `dynatrace/oneagent` as a privileged container |
+| **Kubernetes** | `dtwiz install kubernetes` — deploys the Dynatrace Operator + DynaKube CR |
 | **macOS** | Not supported — noted in analysis output |
 
 **Zero-config defaults for OneAgent:**
@@ -178,7 +178,7 @@ The Dynatrace Operator is the recommended way to deploy Dynatrace on Kubernetes.
 - Automatic log collection from all pod stdout/stderr
 - Extension Execution Controller (EEC) for Dynatrace Extensions Framework 2.0
 
-**Zero-config principle:** `dtingest install kubernetes` deploys with `cloudNativeFullStack` mode — the most comprehensive option — rather than asking users to choose between infrastructure-only, application-only, or full-stack modes.
+**Zero-config principle:** `dtwiz install kubernetes` deploys with `cloudNativeFullStack` mode — the most comprehensive option — rather than asking users to choose between infrastructure-only, application-only, or full-stack modes.
 
 #### 3. ActiveGate
 
@@ -188,7 +188,7 @@ ActiveGate acts as a secure proxy between OneAgents and the Dynatrace cluster, a
 - **Monitoring purpose:** cloud platform monitoring (AWS, Azure, GCP), VMware, SNMP, WMI, Prometheus scraping
 - **Synthetic purpose:** run synthetic monitors from private locations
 
-**dtingest does not directly install standalone ActiveGate** — it is deployed automatically as part of the Kubernetes Operator installation. Standalone ActiveGate installation may be added as a future installer.
+**dtwiz does not directly install standalone ActiveGate** — it is deployed automatically as part of the Kubernetes Operator installation. Standalone ActiveGate installation may be added as a future installer.
 
 #### 4. OpenTelemetry (OTLP native ingest)
 
@@ -202,11 +202,11 @@ Dynatrace natively ingests OpenTelemetry data via OTLP/HTTP. This is the primary
 
 **Three ingestion paths for OTel data:**
 
-| Path | When to use | dtingest support |
+| Path | When to use | dtwiz support |
 |---|---|---|
-| **Dynatrace OTel Collector** | Standalone host — collects and forwards all signals | `dtingest install otel-collector` |
-| **Existing OTel Collector** | Already running collector — add Dynatrace exporter | `dtingest install otel-update` |
-| **OTel SDK direct export** | Application sends OTLP directly (no collector) | Supported by runtime; dtingest sets env vars |
+| **Dynatrace OTel Collector** | Standalone host — collects and forwards all signals | `dtwiz install otel-collector` |
+| **Existing OTel Collector** | Already running collector — add Dynatrace exporter | `dtwiz install otel-update` |
+| **OTel SDK direct export** | Application sends OTLP directly (no collector) | Supported by runtime; dtwiz sets env vars |
 
 **Dynatrace OTel Collector distribution** (from `github.com/Dynatrace/dynatrace-otel-collector`):
 - Curated set of receivers, processors, and exporters verified by Dynatrace
@@ -214,7 +214,7 @@ Dynatrace natively ingests OpenTelemetry data via OTLP/HTTP. This is the primary
 - Covered by Dynatrace support
 - Supports Linux, macOS, Windows × amd64, arm64
 
-**OTel Collector config template** (what dtingest generates):
+**OTel Collector config template** (what dtwiz generates):
 ```yaml
 receivers:
   otlp:
@@ -253,13 +253,13 @@ service:
 
 **OTel auto-instrumentation for application runtimes:**
 
-| Runtime | dtingest support | Packages installed |
+| Runtime | dtwiz support | Packages installed |
 |---|---|---|
-| Python | `dtingest install otel-python` | `opentelemetry-api`, `opentelemetry-sdk`, `opentelemetry-exporter-otlp`, `opentelemetry-instrumentation` |
-| Java | Future: `dtingest install otel-java` | OpenTelemetry Java agent JAR |
-| Node.js | Future: `dtingest install otel-node` | `@opentelemetry/auto-instrumentations-node` |
-| Go | Future: `dtingest install otel-go` | Manual instrumentation guidance |
-| .NET | Future: `dtingest install otel-dotnet` | OpenTelemetry .NET auto-instrumentation |
+| Python | `dtwiz install otel-python` | `opentelemetry-api`, `opentelemetry-sdk`, `opentelemetry-exporter-otlp`, `opentelemetry-instrumentation` |
+| Java | Future: `dtwiz install otel-java` | OpenTelemetry Java agent JAR |
+| Node.js | Future: `dtwiz install otel-node` | `@opentelemetry/auto-instrumentations-node` |
+| Go | Future: `dtwiz install otel-go` | Manual instrumentation guidance |
+| .NET | Future: `dtwiz install otel-dotnet` | OpenTelemetry .NET auto-instrumentation |
 | Ruby | Future | OTel Ruby SDK packages |
 | PHP | Future | OTel PHP auto-instrumentation |
 
@@ -275,8 +275,8 @@ Dynatrace integrates with all major cloud platforms to ingest cloud service metr
 - Cloud topology and tag-based enrichment
 - Cost and resource utilization data
 
-**How dtingest sets it up:**
-- Deploys a CloudFormation stack (`dtingest install aws`) that creates IAM roles for Dynatrace to read CloudWatch metrics
+**How dtwiz sets it up:**
+- Deploys a CloudFormation stack (`dtwiz install aws`) that creates IAM roles for Dynatrace to read CloudWatch metrics
 - Auto-creates the `com.dynatrace.extension.da-aws` monitoring configuration via the Dynatrace API
 - Enables log ingestion for all AWS regions by default
 - Uses `QUICK_START` mode with all standard feature sets enabled
@@ -294,7 +294,7 @@ Dynatrace integrates with all major cloud platforms to ingest cloud service metr
 - Cloud topology with resource group and subscription context
 - Tag-based enrichment for ownership and cost allocation
 
-**How dtingest should set it up (planned — R3.10):**
+**How dtwiz should set it up (planned — R3.10):**
 - Register a Dynatrace Azure integration via the Dynatrace API
 - Create an Azure AD app registration with Reader role for metric collection
 - Enable log forwarding via Azure Event Hub or direct ingestion
@@ -316,7 +316,7 @@ Dynatrace integrates with all major cloud platforms to ingest cloud service metr
 - OneAgent for full-stack monitoring on GCE instances and GKE nodes
 - OpenTelemetry for serverless (Cloud Functions, Cloud Run)
 
-**How dtingest should set it up (planned — R2.12):**
+**How dtwiz should set it up (planned — R2.12):**
 - Detect GCP environment via metadata service or `gcloud` CLI
 - Deploy the `dynatrace-gcp-function` integration
 - Configure GCP service account with monitoring read permissions
@@ -325,18 +325,18 @@ Dynatrace integrates with all major cloud platforms to ingest cloud service metr
 
 Dynatrace supports multiple log ingestion paths, all landing in Grail for unified DQL-based querying:
 
-| Path | Data flow | dtingest relevance |
+| Path | Data flow | dtwiz relevance |
 |---|---|---|
 | **OneAgent log monitoring** | OneAgent reads local log files and container stdout | Enabled by default with `--set-app-log-content-access=true` |
-| **OTel Collector log pipeline** | OTLP logs → Collector → Dynatrace OTLP endpoint | `dtingest install otel-collector` (logs pipeline enabled) |
-| **Log ingest API** | Direct HTTP POST to `/api/v2/logs/ingest` | Used for verification in `dtingest install otel-collector` |
+| **OTel Collector log pipeline** | OTLP logs → Collector → Dynatrace OTLP endpoint | `dtwiz install otel-collector` (logs pipeline enabled) |
+| **Log ingest API** | Direct HTTP POST to `/api/v2/logs/ingest` | Used for verification in `dtwiz install otel-collector` |
 | **Cloud log forwarding** | AWS CloudTrail / Azure Activity Log / GCP ops logs | Enabled as part of cloud integrations |
-| **Fluentd / Fluent Bit** | Third-party log shippers → Dynatrace API | Not directly managed by dtingest |
-| **Generic log ingestion API** | REST API for custom log sources | Not directly managed by dtingest |
+| **Fluentd / Fluent Bit** | Third-party log shippers → Dynatrace API | Not directly managed by dtwiz |
+| **Generic log ingestion API** | REST API for custom log sources | Not directly managed by dtwiz |
 
 #### 7. Metrics ingestion paths
 
-| Path | Protocol | dtingest relevance |
+| Path | Protocol | dtwiz relevance |
 |---|---|---|
 | **OneAgent** | Built-in (process, host, container metrics) | Automatic with OneAgent |
 | **OTLP metrics** | OTLP/HTTP to `/api/v2/otlp` | OTel Collector pipelines |
@@ -347,7 +347,7 @@ Dynatrace supports multiple log ingestion paths, all landing in Grail for unifie
 
 #### 8. Traces / distributed tracing
 
-| Path | Protocol | dtingest relevance |
+| Path | Protocol | dtwiz relevance |
 |---|---|---|
 | **OneAgent** | PurePath (proprietary) + OTel trace enrichment | Automatic with OneAgent |
 | **OTLP traces** | OTLP/HTTP to `/api/v2/otlp` | OTel Collector or direct SDK export |
@@ -357,7 +357,7 @@ Dynatrace supports multiple log ingestion paths, all landing in Grail for unifie
 
 Dynatrace Extensions 2.0 provide monitoring for technologies without native OneAgent support — databases (Oracle, MSSQL, PostgreSQL), network devices (SNMP), custom metrics, and third-party APIs. Extensions run on the Extension Execution Controller (EEC), which is deployed as part of the Kubernetes Operator or as part of an ActiveGate.
 
-**dtingest's role:** The Kubernetes installer deploys the EEC automatically. Standalone EEC/ActiveGate deployment for bare-metal monitoring is a future consideration.
+**dtwiz's role:** The Kubernetes installer deploys the EEC automatically. Standalone EEC/ActiveGate deployment for bare-metal monitoring is a future consideration.
 
 ### Signal coverage matrix
 
@@ -374,7 +374,7 @@ This table shows which signals each ingestion method provides:
 | **Log ingest API** | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | **Metrics ingest API** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-### Zero-config philosophy for dtingest
+### Zero-config philosophy for dtwiz
 
 The core principle: **if we detect it, we enable monitoring for it — no questions asked.**
 
@@ -447,7 +447,7 @@ headers = {
 }
 ```
 
-#### dtingest token resolution for DQL verification
+#### dtwiz token resolution for DQL verification
 
 `verifyOtelInstall` resolves the DQL token with fallback:
 
@@ -461,7 +461,7 @@ Both are sent as `Bearer <token>` to the DQL endpoint. The `dt0c01.*` API token 
 
 ### Dynatrace Hub & ecosystem context
 
-The Dynatrace Hub (`dynatrace.com/hub`) lists 875+ integrations. Key categories relevant to dtingest:
+The Dynatrace Hub (`dynatrace.com/hub`) lists 875+ integrations. Key categories relevant to dtwiz:
 
 - **Cloud platforms:** AWS, Azure, GCP — native integrations with CloudWatch, Azure Monitor, GCP Operations API
 - **Kubernetes:** All-in-one K8s observability app, EKS/AKS/GKE specific integrations
@@ -487,20 +487,20 @@ Installers are partially implemented. The recommendation and analysis engine is 
 
 | ID | Requirement | Status |
 |---|---|---|
-| R1.1 | `dtingest` root command with `--context`, `--environment`, `--access-token`, `--platform-token` persistent flags. | ✅ Done |
-| R1.2 | `dtingest analyze` — run all system detectors and print a summary. Support `--json` for machine-readable output. | ✅ Done |
-| R1.3 | `dtingest recommend` — analyze the system and print ranked ingestion recommendations. Support `--json`. | ✅ Done |
-| R1.4 | `dtingest setup` — interactive guided workflow (analyze → recommend → user picks → install). Support `--dry-run`. | ✅ Done |
-| R1.5 | `dtingest install <method>` — parent command for method-specific installers. Support `--dry-run` on all sub-commands. | ✅ Done |
-| R1.6 | `dtingest install oneagent` — download and run the OneAgent installer on Linux/Windows hosts. | ✅ Done |
-| R1.7 | `dtingest install kubernetes` — deploy the Dynatrace Operator via Helm and apply DynaKube CRs. | ✅ Done |
-| R1.8 | `dtingest install docker` — run OneAgent as a privileged Docker container. | ✅ Done |
-| R1.9 | `dtingest install otel-collector` — download the Dynatrace OTel Collector binary, write config, start the process, and verify log delivery. | ✅ Done |
-| R1.10 | `dtingest install otel-update` — patch an existing OTel Collector YAML config with the Dynatrace OTLP exporter. Support `--config <path>`. | ✅ Done |
-| R1.11 | `dtingest install otel-python` — install OTel Python auto-instrumentation packages and print required env vars. Support `--service-name`. | ✅ Done |
-| R1.12 | `dtingest install aws` — deploy the Dynatrace AWS Data Acquisition CloudFormation stack with interactive prompts for tokens and parameters. | ✅ Done |
-| R1.13 | `dtingest uninstall kubernetes` — remove DynaKube CRs, wait for managed pods, Helm uninstall, delete namespace. | ✅ Done |
-| R1.14 | `dtingest status` — verify Dynatrace connectivity (logged-in user, environment URL) and print system analysis. | ✅ Done |
+| R1.1 | `dtwiz` root command with `--context`, `--environment`, `--access-token`, `--platform-token` persistent flags. | ✅ Done |
+| R1.2 | `dtwiz analyze` — run all system detectors and print a summary. Support `--json` for machine-readable output. | ✅ Done |
+| R1.3 | `dtwiz recommend` — analyze the system and print ranked ingestion recommendations. Support `--json`. | ✅ Done |
+| R1.4 | `dtwiz setup` — interactive guided workflow (analyze → recommend → user picks → install). Support `--dry-run`. | ✅ Done |
+| R1.5 | `dtwiz install <method>` — parent command for method-specific installers. Support `--dry-run` on all sub-commands. | ✅ Done |
+| R1.6 | `dtwiz install oneagent` — download and run the OneAgent installer on Linux/Windows hosts. | ✅ Done |
+| R1.7 | `dtwiz install kubernetes` — deploy the Dynatrace Operator via Helm and apply DynaKube CRs. | ✅ Done |
+| R1.8 | `dtwiz install docker` — run OneAgent as a privileged Docker container. | ✅ Done |
+| R1.9 | `dtwiz install otel-collector` — download the Dynatrace OTel Collector binary, write config, start the process, and verify log delivery. | ✅ Done |
+| R1.10 | `dtwiz install otel-update` — patch an existing OTel Collector YAML config with the Dynatrace OTLP exporter. Support `--config <path>`. | ✅ Done |
+| R1.11 | `dtwiz install otel-python` — install OTel Python auto-instrumentation packages and print required env vars. Support `--service-name`. | ✅ Done |
+| R1.12 | `dtwiz install aws` — deploy the Dynatrace AWS Data Acquisition CloudFormation stack with interactive prompts for tokens and parameters. | ✅ Done |
+| R1.13 | `dtwiz uninstall kubernetes` — remove DynaKube CRs, wait for managed pods, Helm uninstall, delete namespace. | ✅ Done |
+| R1.14 | `dtwiz status` — verify Dynatrace connectivity (logged-in user, environment URL) and print system analysis. | ✅ Done |
 | R1.15 | Every destructive install/uninstall command must show a preview of what will be done and prompt for user confirmation before executing. | ✅ Done |
 
 ### R2 — System Analyzer
@@ -532,7 +532,7 @@ Installers are partially implemented. The recommendation and analysis engine is 
 | R3.6 | If OTel Collector is running, recommend configuring it with the Dynatrace exporter (priority 50). | ✅ Done |
 | R3.7 | Recommendations include `Method`, `Priority`, `Title`, `Description`, `Prerequisites`, and `Steps` fields. | ✅ Done |
 | R3.8 | `MethodNotSupported` entries (e.g. macOS OneAgent) are hidden from recommendation output and noted inline in analysis instead. | ✅ Done |
-| R3.9 | Formatted output uses colored badges: `✓` for done, numbered for actionable, `!` for not-supported. Each actionable recommendation shows the `dtingest install <method>` command. | ✅ Done |
+| R3.9 | Formatted output uses colored badges: `✓` for done, numbered for actionable, `!` for not-supported. Each actionable recommendation shows the `dtwiz install <method>` command. | ✅ Done |
 | R3.10 | If Azure is detected, recommend Azure integration. | ❌ Not started |
 
 ### R4 — Authentication & dtctl Integration

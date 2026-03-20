@@ -1,4 +1,4 @@
-module github.com/dietermayrhofer/dtingest
+module github.com/dietermayrhofer/dtwiz
 
 go 1.24.13
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dietermayrhofer/dtingest/pkg/analyzer"
-	"github.com/dietermayrhofer/dtingest/pkg/recommender"
+	"github.com/dietermayrhofer/dtwiz/pkg/analyzer"
+	"github.com/dietermayrhofer/dtwiz/pkg/recommender"
 	"github.com/spf13/cobra"
 )
 

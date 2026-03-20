@@ -1,8 +1,8 @@
-# dtingest
+# dtwiz
 
 **Dynatrace Ingest CLI** — analyzes your system and deploys the best Dynatrace observability method.
 
-`dtingest` is a Go CLI that ports the Python `ingest-agent` to Go. It reuses **dtctl's entire authentication stack** (config loading, multi-context support, OAuth PKCE token refresh, OS keyring, and API token fallback) by importing `github.com/dynatrace-oss/dtctl` as a module dependency.
+`dtwiz` is a Go CLI that ports the Python `ingest-agent` to Go. It reuses **dtctl's entire authentication stack** (config loading, multi-context support, OAuth PKCE token refresh, OS keyring, and API token fallback) by importing `github.com/dynatrace-oss/dtctl` as a module dependency.
 
 ## Prerequisites
 
@@ -21,15 +21,15 @@ dtctl config set-context my-env \
 ## Installation
 
 ```bash
-source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtingest/main/scripts/install_dtingest_linux_mac.sh)
+source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_linux_mac.sh)
 ```
 
-> Requires bash or zsh. Using `source <(...)` makes `dtingest` available in your current terminal immediately — no need to open a new one.
+> Requires bash or zsh. Using `source <(...)` makes `dtwiz` available in your current terminal immediately — no need to open a new one.
 
 ```bash
 # From source
 git clone https://github.com/dietermayrhofer/dt-clis.git
-cd dt-clis/dtingest
+cd dt-clis/dtwiz
 make install
 ```
 
@@ -37,15 +37,15 @@ make install
 
 | Command | Description |
 |---------|-------------|
-| `dtingest analyze` | Detect platform, containers, K8s, existing agents, cloud, and services |
-| `dtingest recommend` | Generate ranked ingestion recommendations |
-| `dtingest setup` | Interactive analyze → recommend → install workflow |
-| `dtingest install oneagent` | Install Dynatrace OneAgent on this host |
-| `dtingest install kubernetes` | Deploy Dynatrace Operator on Kubernetes |
-| `dtingest install docker` | Install OneAgent for Docker |
-| `dtingest install otel-collector` | Install/configure OpenTelemetry Collector |
-| `dtingest install aws` | Set up Dynatrace AWS CloudFormation integration |
-| `dtingest status` | Show Dynatrace connection status and system state |
+| `dtwiz analyze` | Detect platform, containers, K8s, existing agents, cloud, and services |
+| `dtwiz recommend` | Generate ranked ingestion recommendations |
+| `dtwiz setup` | Interactive analyze → recommend → install workflow |
+| `dtwiz install oneagent` | Install Dynatrace OneAgent on this host |
+| `dtwiz install kubernetes` | Deploy Dynatrace Operator on Kubernetes |
+| `dtwiz install docker` | Install OneAgent for Docker |
+| `dtwiz install otel-collector` | Install/configure OpenTelemetry Collector |
+| `dtwiz install aws` | Set up Dynatrace AWS CloudFormation integration |
+| `dtwiz status` | Show Dynatrace connection status and system state |
 
 Use `--context <name>` on any command to override the active dtctl context.
 
@@ -56,16 +56,16 @@ Use `--context <name>` on any command to override the active dtctl context.
 dtctl auth login
 
 # 2. Analyze the current system
-dtingest analyze
+dtwiz analyze
 
 # 3. Get ranked recommendations
-dtingest recommend
+dtwiz recommend
 
 # 4. Install the recommended method (e.g., Kubernetes)
-dtingest install kubernetes
+dtwiz install kubernetes
 
 # 5. Check status
-dtingest status
+dtwiz status
 ```
 
 ## JSON output
@@ -73,15 +73,15 @@ dtingest status
 `analyze` and `recommend` support `--json` for structured output:
 
 ```bash
-dtingest analyze --json | jq .platform
-dtingest recommend --json | jq '.[0].method'
+dtwiz analyze --json | jq .platform
+dtwiz recommend --json | jq '.[0].method'
 ```
 
 ## Building
 
 ```bash
-cd dtingest
-make build        # builds ./dtingest binary
+cd dtwiz
+make build        # builds ./dtwiz binary
 make test         # runs go test ./...
 make install      # installs to $GOPATH/bin
 make clean        # removes build artifacts
@@ -90,7 +90,7 @@ make clean        # removes build artifacts
 ## Architecture
 
 ```
-dtingest/
+dtwiz/
 ├── main.go
 ├── cmd/
 │   ├── root.go       # Cobra root + --context flag
@@ -106,4 +106,4 @@ dtingest/
     └── installer/    # Shared utilities + per-method stubs
 ```
 
-Authentication is fully delegated to dtctl — `dtingest` never stores credentials itself.
+Authentication is fully delegated to dtctl — `dtwiz` never stores credentials itself.

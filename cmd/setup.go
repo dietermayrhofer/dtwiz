@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dietermayrhofer/dtingest/pkg/analyzer"
-	"github.com/dietermayrhofer/dtingest/pkg/installer"
-	"github.com/dietermayrhofer/dtingest/pkg/recommender"
+	"github.com/dietermayrhofer/dtwiz/pkg/analyzer"
+	"github.com/dietermayrhofer/dtwiz/pkg/installer"
+	"github.com/dietermayrhofer/dtwiz/pkg/recommender"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )

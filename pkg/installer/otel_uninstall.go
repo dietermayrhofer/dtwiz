@@ -70,10 +70,10 @@ func binaryPathFromPID(pid int) string {
 }
 
 // candidateOtelDirs returns a deduplicated list of directories that look like
-// they were created by dtingest's OTel Collector installer:
+// they were created by dtwiz's OTel Collector installer:
 //   - install dirs derived from running process binary paths
-//   - ~/opentelemetry  (default when dtingest was run from $HOME)
-//   - ./opentelemetry  (default when dtingest was run from CWD)
+//   - ~/opentelemetry  (default when dtwiz was run from $HOME)
+//   - ./opentelemetry  (default when dtwiz was run from CWD)
 func candidateOtelDirs(infos []otelProcessInfo) []string {
 	seen := map[string]bool{}
 	var dirs []string
@@ -92,7 +92,7 @@ func candidateOtelDirs(infos []otelProcessInfo) []string {
 		add(info.installDir)
 	}
 
-	// Well-known default locations dtingest uses.
+	// Well-known default locations dtwiz uses.
 	if home, err := os.UserHomeDir(); err == nil {
 		add(filepath.Join(home, "opentelemetry"))
 	}
@@ -127,7 +127,7 @@ func killCollectorProcesses(procs []otelProcessInfo) string {
 }
 
 // UninstallOtelCollector kills all running Dynatrace OTel Collector processes
-// and removes the installation directories created by dtingest.
+// and removes the installation directories created by dtwiz.
 func UninstallOtelCollector(dryRun bool) error {
 	header := color.New(color.FgMagenta, color.Bold)
 	muted := color.New()

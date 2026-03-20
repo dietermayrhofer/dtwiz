@@ -8,8 +8,8 @@ import (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print the dtingest version",
+	Short: "Print the dtwiz version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("dtingest %s\n", Version)
+		fmt.Printf("dtwiz %s\n", Version)
 	},
 }

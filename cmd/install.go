@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/dietermayrhofer/dtingest/pkg/installer"
+	"github.com/dietermayrhofer/dtwiz/pkg/installer"
 	"github.com/spf13/cobra"
 )
 

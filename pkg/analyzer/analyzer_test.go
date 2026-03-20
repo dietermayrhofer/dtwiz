@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/dietermayrhofer/dtingest/pkg/analyzer"
+	"github.com/dietermayrhofer/dtwiz/pkg/analyzer"
 )
 
 func TestAnalyzeSystem_ReturnsPlatform(t *testing.T) {
