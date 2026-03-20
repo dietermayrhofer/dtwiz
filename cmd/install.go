@@ -108,6 +108,24 @@ var installAWSCmd = &cobra.Command{
 	},
 }
 
+var installAzureCmd = &cobra.Command{
+	Use:   "azure",
+	Short: "Set up Dynatrace Azure Monitor integration",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return installer.InstallAzure()
+	},
+}
+
+var installGCPCmd = &cobra.Command{
+	Use:   "gcp",
+	Short: "Set up Dynatrace Google Cloud Platform integration",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return installer.InstallGCP()
+	},
+}
+
 func init() {
 	installCmd.PersistentFlags().BoolVar(&installDryRun, "dry-run", false, "show what would be done without executing")
 
@@ -123,4 +141,6 @@ func init() {
 	installCmd.AddCommand(installOtelUpdateCmd)
 	installCmd.AddCommand(installOtelPythonCmd)
 	installCmd.AddCommand(installAWSCmd)
+	installCmd.AddCommand(installAzureCmd)
+	installCmd.AddCommand(installGCPCmd)
 }
