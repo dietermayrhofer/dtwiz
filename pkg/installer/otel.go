@@ -449,12 +449,15 @@ func toAppsURL(envURL string) string {
 }
 
 // buildOtelLogsUIURL constructs the Dynatrace Logs UI deep-link pre-filtered
-// to show records containing searchTerm.
+// to show records containing searchTerm, using the intent-based URL pattern.
 func buildOtelLogsUIURL(envURL, searchTerm string) string {
 	base := strings.TrimRight(toAppsURL(envURL), "/")
-	fragment := fmt.Sprintf(`{"filterFieldQuery":"content = *%s*"}`, searchTerm)
+	fragment := fmt.Sprintf(
+		`{"dt.query":"fetch logs","dt.segments":[],"showDqlEditor":false,"dt.queryConfig":{},"facetsCollapse":false,"filterFieldQuery":"content = *%s*"}`,
+		searchTerm,
+	)
 	encoded := strings.ReplaceAll(url.QueryEscape(fragment), "+", "%20")
-	return base + "/ui/apps/dynatrace.logs/#" + encoded
+	return base + "/ui/apps/dynatrace.logs/intent/view_query#" + encoded
 }
 
 // waitForOtelCollectorReady polls TCP port 4318 until the collector accepts
