@@ -16,6 +16,7 @@ var recommendCmd = &cobra.Command{
 	Use:   "recommend",
 	Short: "Recommend the best Dynatrace ingestion methods for this system",
 	Long:  `Analyzes the system and generates ranked recommendations with priorities, prerequisites, and steps.`,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		info, err := analyzer.AnalyzeSystem()
 		if err != nil {

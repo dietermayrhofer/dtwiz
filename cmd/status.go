@@ -20,6 +20,7 @@ var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show connection status and system state",
 	Long:  `Verifies connectivity to Dynatrace and displays the current system analysis.`,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		statusHead.Println("  Connection Status")
 		statusMuted.Println("  " + "──────────────────────────────────────────")

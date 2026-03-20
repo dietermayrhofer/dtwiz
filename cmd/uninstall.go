@@ -5,14 +5,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var uninstallDryRun bool
+
 var uninstallCmd = &cobra.Command{
 	Use:   "uninstall <method>",
 	Short: "Uninstall a Dynatrace ingestion method",
+	Args:  cobra.MinimumNArgs(1),
 }
 
 var uninstallKubernetesCmd = &cobra.Command{
 	Use:   "kubernetes",
 	Short: "Remove Dynatrace Operator and DynaKube resources from Kubernetes",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return installer.UninstallKubernetes()
 	},
@@ -21,28 +25,28 @@ var uninstallKubernetesCmd = &cobra.Command{
 var uninstallOneAgentCmd = &cobra.Command{
 	Use:   "oneagent",
 	Short: "Uninstall Dynatrace OneAgent from this host",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		return installer.UninstallOneAgent(dryRun)
+		return installer.UninstallOneAgent(uninstallDryRun)
 	},
 }
 
 var uninstallAWSCmd = &cobra.Command{
 	Use:   "aws",
 	Short: "Remove the Dynatrace AWS CloudFormation stack and monitoring configuration",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		envURL, token, _ := getDtEnvironment()
-		return installer.UninstallAWS(envURL, token, dryRun)
+		return installer.UninstallAWS(envURL, token, uninstallDryRun)
 	},
 }
 
 var uninstallOtelCmd = &cobra.Command{
-	Use:   "otel-collector",
+	Use:   "otel",
 	Short: "Kill running OTel Collector processes and remove installation files",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		return installer.UninstallOtelCollector(dryRun)
+		return installer.UninstallOtelCollector(uninstallDryRun)
 	},
 }
 
@@ -53,15 +57,14 @@ var uninstallSelfCmd = &cobra.Command{
 
 On Linux/macOS the binary is deleted and the shell profile is updated.
 On Windows, ready-to-paste PowerShell commands are printed instead.`,
+	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return installer.UninstallSelf()
 	},
 }
 
 func init() {
-	uninstallOneAgentCmd.Flags().Bool("dry-run", false, "Show what would be done without making changes")
-	uninstallAWSCmd.Flags().Bool("dry-run", false, "Show what would be done without making changes")
-	uninstallOtelCmd.Flags().Bool("dry-run", false, "Show what would be done without making changes")
+	uninstallCmd.PersistentFlags().BoolVar(&uninstallDryRun, "dry-run", false, "show what would be done without making changes")
 	uninstallCmd.AddCommand(uninstallKubernetesCmd)
 	uninstallCmd.AddCommand(uninstallOneAgentCmd)
 	uninstallCmd.AddCommand(uninstallAWSCmd)

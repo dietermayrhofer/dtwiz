@@ -23,6 +23,7 @@ var setupCmd = &cobra.Command{
   2. Generates ranked recommendations
   3. Prompts you to pick a method
   4. Runs the selected installer`,
+	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		setupHeader := color.New(color.FgMagenta, color.Bold)
 		setupMuted := color.New()

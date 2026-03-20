@@ -15,6 +15,7 @@ var analyzeCmd = &cobra.Command{
 	Use:   "analyze",
 	Short: "Analyze the current system for observability configuration",
 	Long:  `Detect platform, container runtime, orchestration, existing agents, cloud providers, and running services.`,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		info, err := analyzer.AnalyzeSystem()
 		if err != nil {

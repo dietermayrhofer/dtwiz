@@ -2,10 +2,10 @@
 # install.sh — Download and install dtwiz for the current platform.
 #
 # Usage (recommended — makes dtwiz available immediately without reopening your terminal):
-#   source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_linux_mac.sh)
+#   source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install.sh)
 #
 # Alternative (requires opening a new terminal afterwards):
-#   curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_linux_mac.sh | sh
+#   curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install.sh | sh
 #
 # Requires bash or zsh. Pass --install-dir <dir> to override the install location.
 # By default the binary is installed to /usr/local/bin (requires sudo) or

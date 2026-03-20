@@ -17,7 +17,7 @@ const (
 	MethodOneAgent         IngestMethod = "oneagent"
 	MethodKubernetes       IngestMethod = "kubernetes"
 	MethodDocker           IngestMethod = "docker"
-	MethodOtelCollector    IngestMethod = "otel-collector"
+	MethodOtelCollector    IngestMethod = "otel"
 	MethodOtelUpdate       IngestMethod = "otel-update"
 	MethodAWS              IngestMethod = "aws"
 	MethodAlreadyInstalled IngestMethod = "already-installed"
@@ -87,7 +87,7 @@ func GenerateRecommendations(system *analyzer.SystemInfo) []Recommendation {
 			Description: "Deploy the Dynatrace OpenTelemetry Collector to ingest traces, metrics, and logs via OTLP.",
 			Prerequisites: []string{"Dynatrace API token with ingest scopes"},
 			Steps: []string{
-				"dtwiz install otel-collector",
+				"dtwiz install otel",
 			},
 		})
 	}

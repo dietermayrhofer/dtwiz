@@ -141,7 +141,7 @@ The install script (`scripts/install.sh`) constructs this name at runtime and do
 
 ### Pitfall: tag exists but release has no assets
 
-`git push --tags` (or the GitHub UI "draft release" flow) can create a lightweight GitHub release with an empty assets list. In that state `dtwiz install otel-collector` — and the install script itself — will fail with 404 because there are no binaries to download.
+`git push --tags` (or the GitHub UI "draft release" flow) can create a lightweight GitHub release with an empty assets list. In that state `dtwiz install otel` — and the install script itself — will fail with 404 because there are no binaries to download.
 
 **Fix:** run `goreleaser release --clean` against the existing tag. GoReleaser detects the already-created release and uploads the missing archives.
 
@@ -204,7 +204,7 @@ Dynatrace natively ingests OpenTelemetry data via OTLP/HTTP. This is the primary
 
 | Path | When to use | dtwiz support |
 |---|---|---|
-| **Dynatrace OTel Collector** | Standalone host — collects and forwards all signals | `dtwiz install otel-collector` |
+| **Dynatrace OTel Collector** | Standalone host — collects and forwards all signals | `dtwiz install otel` |
 | **Existing OTel Collector** | Already running collector — add Dynatrace exporter | `dtwiz install otel-update` |
 | **OTel SDK direct export** | Application sends OTLP directly (no collector) | Supported by runtime; dtwiz sets env vars |
 
@@ -328,8 +328,8 @@ Dynatrace supports multiple log ingestion paths, all landing in Grail for unifie
 | Path | Data flow | dtwiz relevance |
 |---|---|---|
 | **OneAgent log monitoring** | OneAgent reads local log files and container stdout | Enabled by default with `--set-app-log-content-access=true` |
-| **OTel Collector log pipeline** | OTLP logs → Collector → Dynatrace OTLP endpoint | `dtwiz install otel-collector` (logs pipeline enabled) |
-| **Log ingest API** | Direct HTTP POST to `/api/v2/logs/ingest` | Used for verification in `dtwiz install otel-collector` |
+| **OTel Collector log pipeline** | OTLP logs → Collector → Dynatrace OTLP endpoint | `dtwiz install otel` (logs pipeline enabled) |
+| **Log ingest API** | Direct HTTP POST to `/api/v2/logs/ingest` | Used for verification in `dtwiz install otel` |
 | **Cloud log forwarding** | AWS CloudTrail / Azure Activity Log / GCP ops logs | Enabled as part of cloud integrations |
 | **Fluentd / Fluent Bit** | Third-party log shippers → Dynatrace API | Not directly managed by dtwiz |
 | **Generic log ingestion API** | REST API for custom log sources | Not directly managed by dtwiz |
@@ -495,7 +495,7 @@ Installers are partially implemented. The recommendation and analysis engine is 
 | R1.6 | `dtwiz install oneagent` — download and run the OneAgent installer on Linux/Windows hosts. | ✅ Done |
 | R1.7 | `dtwiz install kubernetes` — deploy the Dynatrace Operator via Helm and apply DynaKube CRs. | ✅ Done |
 | R1.8 | `dtwiz install docker` — run OneAgent as a privileged Docker container. | ✅ Done |
-| R1.9 | `dtwiz install otel-collector` — download the Dynatrace OTel Collector binary, write config, start the process, and verify log delivery. | ✅ Done |
+| R1.9 | `dtwiz install otel` — download the Dynatrace OTel Collector binary, write config, start the process, and verify log delivery. | ✅ Done |
 | R1.10 | `dtwiz install otel-update` — patch an existing OTel Collector YAML config with the Dynatrace OTLP exporter. Support `--config <path>`. | ✅ Done |
 | R1.11 | `dtwiz install otel-python` — install OTel Python auto-instrumentation packages and print required env vars. Support `--service-name`. | ✅ Done |
 | R1.12 | `dtwiz install aws` — deploy the Dynatrace AWS Data Acquisition CloudFormation stack with interactive prompts for tokens and parameters. | ✅ Done |

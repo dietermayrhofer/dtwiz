@@ -10,11 +10,13 @@ var installDryRun bool
 var installCmd = &cobra.Command{
 	Use:   "install <method>",
 	Short: "Install a Dynatrace ingestion method",
+	Args:  cobra.MinimumNArgs(1),
 }
 
 var installOneAgentCmd = &cobra.Command{
 	Use:   "oneagent",
 	Short: "Install Dynatrace OneAgent on this host",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		envURL, token, err := getDtEnvironment()
 		if err != nil {
@@ -29,6 +31,7 @@ var installOneAgentCmd = &cobra.Command{
 var installKubernetesCmd = &cobra.Command{
 	Use:   "kubernetes",
 	Short: "Deploy Dynatrace Operator on Kubernetes",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		envURL, token, err := getDtEnvironment()
 		if err != nil {
@@ -41,6 +44,7 @@ var installKubernetesCmd = &cobra.Command{
 var installDockerCmd = &cobra.Command{
 	Use:   "docker",
 	Short: "Install Dynatrace OneAgent for Docker",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		envURL, token, err := getDtEnvironment()
 		if err != nil {
@@ -51,8 +55,9 @@ var installDockerCmd = &cobra.Command{
 }
 
 var installOtelCmd = &cobra.Command{
-	Use:   "otel-collector",
+	Use:   "otel",
 	Short: "Install or configure OpenTelemetry Collector",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		envURL, token, err := getDtEnvironment()
 		if err != nil {
@@ -66,6 +71,7 @@ var otelUpdateConfigPath string
 var installOtelUpdateCmd = &cobra.Command{
 	Use:   "otel-update",
 	Short: "Patch an existing OTel Collector config with the Dynatrace exporter",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		envURL, token, err := getDtEnvironment()
 		if err != nil {
@@ -79,6 +85,7 @@ var otelPythonServiceName string
 var installOtelPythonCmd = &cobra.Command{
 	Use:   "otel-python",
 	Short: "Set up OpenTelemetry Python auto-instrumentation",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		envURL, token, err := getDtEnvironment()
 		if err != nil {
@@ -91,6 +98,7 @@ var installOtelPythonCmd = &cobra.Command{
 var installAWSCmd = &cobra.Command{
 	Use:   "aws",
 	Short: "Set up Dynatrace AWS CloudFormation integration",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		envURL, token, err := getDtEnvironment()
 		if err != nil {

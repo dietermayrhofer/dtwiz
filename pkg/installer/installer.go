@@ -56,7 +56,9 @@ func AppsURL(environmentURL string) string {
 		return envURL
 	}
 	// live.dynatrace.com is the production variant of the classic URL.
-	envURL = strings.Replace(envURL, ".live.dynatrace.com", ".apps.dynatrace.com", 1)
+	if strings.Contains(envURL, ".live.dynatrace.com") {
+		return strings.Replace(envURL, ".live.dynatrace.com", ".apps.dynatrace.com", 1)
+	}
 	// For dev/sprint envs, insert .apps. before the domain suffix.
 	for _, suffix := range []string{".dynatracelabs.com", ".dynatrace.com"} {
 		if idx := strings.Index(envURL, suffix); idx != -1 {

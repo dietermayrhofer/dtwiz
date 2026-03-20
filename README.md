@@ -14,7 +14,7 @@ Run the following commands in your terminal/console to install and launch `dtwiz
 export DT_ENVIRONMENT="https://<your-tenant-domain>"
 export DT_ACCESS_TOKEN="dt0c01.XXXX..."
 export DT_PLATFORM_TOKEN="dt0s16.XXXX..."
-source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_linux_mac.sh)
+source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install.sh)
 dtwiz setup
 ```
 
@@ -26,7 +26,7 @@ dtwiz setup
 $env:DT_ENVIRONMENT="https://<your-tenant-domain>"
 $env:DT_ACCESS_TOKEN="dt0c01.XXXX..."
 $env:DT_PLATFORM_TOKEN="dt0s16.XXXX..."
-irm https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_windows.ps1 | iex
+irm https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install.ps1 | iex
 dtwiz setup
 ```
 
@@ -44,12 +44,12 @@ Set the following environment variables before running `dtwiz`:
 
 **Linux / macOS:**
 ```bash
-source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_linux_mac.sh)
+source <(curl -sSL https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install.sh)
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install_dtwiz_windows.ps1 | iex
+irm https://raw.githubusercontent.com/dietermayrhofer/dtwiz/main/scripts/install.ps1 | iex
 ```
 
 **From source:**
@@ -69,11 +69,9 @@ make install
 | `dtwiz install oneagent` | Install Dynatrace OneAgent on this host |
 | `dtwiz install kubernetes` | Deploy Dynatrace Operator on Kubernetes |
 | `dtwiz install docker` | Install OneAgent for Docker |
-| `dtwiz install otel-collector` | Install/configure OpenTelemetry Collector |
+| `dtwiz install otel` | Install/configure OpenTelemetry Collector |
 | `dtwiz install aws` | Set up Dynatrace AWS CloudFormation integration |
 | `dtwiz status` | Show Dynatrace connection status and system state |
-
-Use `--context <name>` on any command to override the active dtctl context.
 
 ## Example workflow
 
@@ -121,7 +119,7 @@ make clean        # removes build artifacts
 dtwiz/
 ├── main.go
 ├── cmd/
-│   ├── root.go       # Cobra root + --context flag
+│   ├── root.go       # Cobra root + persistent flags
 │   ├── auth.go       # dtctl auth bridge (loadDtctlConfig, newDtClient, getDtEnvironment)
 │   ├── analyze.go
 │   ├── recommend.go
