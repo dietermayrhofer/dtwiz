@@ -714,7 +714,76 @@ func startOtelCollector(binaryPath, configPath string) (<-chan error, error) {
 	fmt.Println("  OpenTelemetry Collector running.")
 	return crashed, nil
 }
+// runtimeInstrumentation maps a detected runtime name to its installer.
+type runtimeInstrumentation struct {
+	Name    string
+	Detect  func() bool
+	Install func(apiURL, token string, dryRun bool) error
+}
 
+// supportedRuntimes returns the list of runtimes we can auto-instrument.
+func supportedRuntimes() []runtimeInstrumentation {
+	return []runtimeInstrumentation{
+		{
+			Name:   "python",
+			Detect: func() bool { _, err := exec.LookPath("python3"); return err == nil },
+			Install: func(apiURL, token string, dryRun bool) error {
+				return InstallOtelPython(apiURL, token, "", dryRun)
+			},
+		},
+		{
+			Name:   "java",
+			Detect: func() bool { _, err := exec.LookPath("java"); return err == nil },
+			Install: func(apiURL, token string, dryRun bool) error {
+				return InstallOtelJava(apiURL, token, "", dryRun)
+			},
+		},
+	}
+}
+
+// offerRuntimeInstrumentation detects available runtimes and offers to
+// auto-instrument them after a successful collector installation.
+func offerRuntimeInstrumentation(apiURL, token string, dryRun bool) {
+	var detected []runtimeInstrumentation
+	for _, rt := range supportedRuntimes() {
+		if rt.Detect() {
+			detected = append(detected, rt)
+		}
+	}
+	if len(detected) == 0 {
+		return
+	}
+
+	fmt.Println()
+	fmt.Println("  Detected runtimes that can be auto-instrumented:")
+	for i, rt := range detected {
+		fmt.Printf("    [%d] %s\n", i+1, rt.Name)
+	}
+	fmt.Println()
+	fmt.Printf("  Instrument runtimes? [Y/n/1-%d]: ", len(detected))
+
+	reader := bufio.NewReader(os.Stdin)
+	answer, _ := reader.ReadString('\n')
+	answer = strings.TrimSpace(strings.ToLower(answer))
+
+	// Determine which runtimes to instrument.
+	var selected []runtimeInstrumentation
+	if answer == "" || answer == "y" || answer == "yes" {
+		selected = detected
+	} else if idx, err := strconv.Atoi(answer); err == nil && idx >= 1 && idx <= len(detected) {
+		selected = []runtimeInstrumentation{detected[idx-1]}
+	} else {
+		// "n", "no", or anything else → skip
+		return
+	}
+
+	for _, rt := range selected {
+		fmt.Printf("\n  ── %s auto-instrumentation ──\n\n", rt.Name)
+		if err := rt.Install(apiURL, token, dryRun); err != nil {
+			fmt.Printf("  Warning: %s instrumentation failed: %v\n", rt.Name, err)
+		}
+	}
+}
 // InstallOtelCollector downloads, configures, and starts the Dynatrace OTel
 // Collector, pointing it at the given environment.
 //
@@ -853,5 +922,9 @@ func InstallOtelCollector(envURL, token, ingestToken, platformToken string, dryR
 		fmt.Printf("\n  Warning: log verification failed: %v\n", err)
 		fmt.Println("  The collector may still be working — check the Dynatrace UI.")
 	}
+
+	// Offer to auto-instrument detected runtimes.
+	offerRuntimeInstrumentation(apiURL, token, dryRun)
+
 	return nil
 }

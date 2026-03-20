@@ -1,10 +1,14 @@
 package installer
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 // OtelPythonResult holds the outcome of an OTel Python auto-instrumentation setup.
@@ -14,6 +18,12 @@ type OtelPythonResult struct {
 	VirtualEnv    string
 	PackagesAdded []string
 	EnvVars       map[string]string
+}
+
+// PythonProcess describes a detected running Python process.
+type PythonProcess struct {
+	PID     int
+	Command string // full command line
 }
 
 // detectPython finds a usable Python 3 executable on the current PATH,
@@ -106,11 +116,104 @@ func generateOtelPythonEnvVars(apiURL, token, serviceName string) map[string]str
 // GenerateEnvExportScript returns a shell `export` script for the given env vars.
 func GenerateEnvExportScript(envVars map[string]string) string {
 	var sb strings.Builder
-	sb.WriteString("# Dynatrace OpenTelemetry Python auto-instrumentation environment variables\n")
+	sb.WriteString("# Dynatrace OpenTelemetry auto-instrumentation environment variables\n")
 	for k, v := range envVars {
 		sb.WriteString(fmt.Sprintf("export %s=%q\n", k, v))
 	}
 	return sb.String()
+}
+
+// detectPythonProcesses finds running Python processes (excluding the current
+// process and common system Python processes).
+func detectPythonProcesses() []PythonProcess {
+	// Use ps to find python processes with full command line.
+	out, err := exec.Command("ps", "ax", "-o", "pid=,command=").Output()
+	if err != nil {
+		return nil
+	}
+
+	var procs []PythonProcess
+	myPID := os.Getpid()
+	for _, line := range strings.Split(string(out), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		// Split into PID and command.
+		parts := strings.SplitN(line, " ", 2)
+		if len(parts) < 2 {
+			continue
+		}
+		pid, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+		if err != nil || pid == myPID {
+			continue
+		}
+		cmd := strings.TrimSpace(parts[1])
+		// Match python processes but skip system/pip/setup processes.
+		if !strings.Contains(cmd, "python") {
+			continue
+		}
+		if strings.Contains(cmd, "pip ") || strings.Contains(cmd, "setup.py") ||
+			strings.Contains(cmd, "/bin/dtwiz") || strings.Contains(cmd, "opentelemetry-instrument") {
+			continue
+		}
+		procs = append(procs, PythonProcess{PID: pid, Command: cmd})
+	}
+	return procs
+}
+
+// promptPythonRestart shows detected Python processes and offers to restart
+// them with the OTel environment variables.
+func promptPythonRestart(procs []PythonProcess, envVars map[string]string) {
+	if len(procs) == 0 {
+		return
+	}
+
+	otelHeader := color.New(color.FgMagenta, color.Bold)
+	otelMuted := color.New()
+
+	fmt.Println()
+	otelHeader.Println("  Detected Python processes:")
+	otelMuted.Println("  " + strings.Repeat("─", 42))
+	for i, p := range procs {
+		fmt.Printf("  [%d]  PID %-6d %s\n", i+1, p.PID, truncateCmd(p.Command, 60))
+	}
+	fmt.Println()
+	fmt.Println("  To instrument these processes, restart them with the env vars above.")
+	fmt.Println("  Example:")
+	fmt.Println("    opentelemetry-instrument python your_app.py")
+	fmt.Println()
+	fmt.Print("  Restart selected processes now? [y/N]: ")
+
+	reader := bufio.NewReader(os.Stdin)
+	answer, _ := reader.ReadString('\n')
+	answer = strings.TrimSpace(strings.ToLower(answer))
+	if answer != "y" && answer != "yes" {
+		return
+	}
+
+	fmt.Println()
+	for _, p := range procs {
+		fmt.Printf("  Sending SIGTERM to PID %d (%s)...\n", p.PID, truncateCmd(p.Command, 40))
+		proc, err := os.FindProcess(p.PID)
+		if err != nil {
+			fmt.Printf("    Warning: could not find process %d: %v\n", p.PID, err)
+			continue
+		}
+		if err := proc.Signal(os.Interrupt); err != nil {
+			fmt.Printf("    Warning: could not signal process %d: %v\n", p.PID, err)
+		} else {
+			fmt.Printf("    Stopped PID %d — restart it manually with the OTel env vars.\n", p.PID)
+		}
+	}
+}
+
+// truncateCmd shortens a command string for display.
+func truncateCmd(cmd string, maxLen int) string {
+	if len(cmd) <= maxLen {
+		return cmd
+	}
+	return cmd[:maxLen-3] + "..."
 }
 
 // InstallOtelPython sets up OpenTelemetry auto-instrumentation for Python
@@ -180,6 +283,10 @@ func InstallOtelPython(envURL, token, serviceName string, dryRun bool) error {
 	fmt.Println(GenerateEnvExportScript(envVars))
 	fmt.Println("  Then run your application with:")
 	fmt.Printf("    opentelemetry-instrument python your_app.py\n")
+
+	// 6. Detect running Python processes and offer restart.
+	procs := detectPythonProcesses()
+	promptPythonRestart(procs, envVars)
 
 	return nil
 }

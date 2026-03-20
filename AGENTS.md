@@ -78,6 +78,16 @@ Credentials resolved from: `--environment`/`--access-token`/`--platform-token` f
 - **`--dry-run` pattern:** Defined once as a `PersistentFlags().BoolVar()` on the parent command (`installCmd`, `updateCmd`, `uninstallCmd`), shared by all subcommands via a package-level variable.
 - **Verb-noun command tree:** Top-level verbs are `install`, `update`, `uninstall`. Methods are subcommands (`dtwiz install otel`, `dtwiz update otel`). New operations get their own verb — don't nest verbs under `install`.
 
+## UX: transparency before execution
+
+Before running any block of commands or applying changes, always show the user a compact preview:
+
+- Print the commands or actions that will run — one line each, no noise.
+- If a config file is generated or modified, print its full contents inline.
+- End with a single confirmation prompt: `Apply? [Y/n]` — default is **yes** (Enter = proceed).
+
+**Reduce to the max:** Surface only what the user needs to stay informed. Omit internal details, progress spam, and redundant labels. Every line of output must earn its place — if it doesn't help the user understand what happened or what went wrong, cut it.
+
 ## Build & release
 
 ```sh
